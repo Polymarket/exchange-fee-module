@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import "forge-std/Test.sol";
 import "../src/FeeModule.sol";
 
-contract FeeModuleTest is Test {
-    function testEquals() public {
-        uint256 x = 1;
-        assertEq(1, x);
+import { FeeModuleTestHelper } from "./dev/FeeModuleTestHelper.sol";
+
+contract FeeModuleTest is FeeModuleTestHelper {
+    function testSetup() public {
+        assertTrue(feeModule.isAdmin(admin));
+        assertFalse(feeModule.isAdmin(brian));
     }
 }
