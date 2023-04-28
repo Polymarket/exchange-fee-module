@@ -10,4 +10,8 @@ interface IFeeModule {
         uint256 takerFillAmount,
         uint256[] memory makerFillAmounts
     ) external;
+
+    function withdrawERC20Fees(address token, uint256 amount) external;
+
+    function withdrawERC1155Fees(address token, uint256 id, uint256 amount) external;
 }

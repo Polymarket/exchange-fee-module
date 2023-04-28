@@ -10,7 +10,7 @@ import { IFeeModule } from "./interfaces/IFeeModule.sol";
 
 /// @title Polymarket CTF Fee Module
 /// @notice Proxies the CTFExchange contract and refunds maker orders
-/// @author Jonathan Amenechi (jon@polymarket.com)
+/// @author Jon Amenechi (jon@polymarket.com)
 contract FeeModule is IFeeModule, Auth, ERC1155TokenReceiver {
     
     /// @notice Matches a taker order against a list of maker orders, refunding maker orders if necessary
@@ -24,6 +24,23 @@ contract FeeModule is IFeeModule, Auth, ERC1155TokenReceiver {
         uint256 takerFillAmount,
         uint256[] memory makerFillAmounts
     ) external onlyAdmin {
+
+        // 
         
+    }
+
+    /// @notice Withdraw collected ERC20 token fees
+    /// @param token    - The ERC20 token address
+    /// @param amount   - The amount to be withdrawn
+    function withdrawERC20Fees(address token, uint256 amount) external onlyAdmin {
+
+    }
+
+    /// @notice Withdraw collected ERC1155 token fees
+    /// @param token    - The ERC1155 token address
+    /// @param id       - The Token ID
+    /// @param amount   - The amount to be withdrawn
+    function withdrawERC1155Fees(address token, uint256 id, uint256 amount) external onlyAdmin {
+
     }
 }
