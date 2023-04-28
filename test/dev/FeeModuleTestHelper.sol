@@ -22,9 +22,20 @@ contract Token is ERC20 {
 contract FeeModuleTestHelper is TestHelper, IAuthEE {
     address public admin = alice;
 
+    // Order Signers
+    uint256 internal bobPK = 0xB0B;
+    uint256 internal carlaPK = 0xCA414;
+    address public bob;
+    address public carla;
+
+    // Tokens
     address public usdc;
     address public ctf;
+    
+    // Contracts
     address public exchange;
+    
+    // Fee Module
     FeeModule public feeModule;
 
     bytes32 public constant questionID = hex"1234";
@@ -32,7 +43,12 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE {
     uint256 public yes;
     uint256 public no;
 
-    function setUp() public virtual {        
+    function setUp() public virtual {
+        bob = vm.addr(bobPK);
+        vm.label(bob, "bob");
+        carla = vm.addr(carlaPK);
+        vm.label(carla, "carla");
+
         usdc = address(new Token("USD Coin", "USDC"));
         vm.label(usdc, "USDC");
 

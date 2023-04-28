@@ -85,7 +85,8 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
             order.feeRateBps, order.side == Side.BUY ? taking : making, order.makerAmount, order.takerAmount, order.side
         );
 
-        // If the order is a buy, proceeds, and fees, will be denominated in ERC1155 token
+        // If buy: proceeds, and fees, will be denominated in ERC1155 token
+        // If sell, proceeds and fees will be denominated in the ERC20 token
         uint256 id = order.side == Side.BUY ? order.tokenId : 0;
         address token = order.side == Side.BUY ? ctf : collateral;
         
