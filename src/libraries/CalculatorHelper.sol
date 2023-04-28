@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import { Order, Side } from "../libraries/OrderStructs.sol";
+import { Order, Side } from "../libraries/Structs.sol";
 
 library CalculatorHelper {
     uint256 internal constant ONE = 10 ** 18;

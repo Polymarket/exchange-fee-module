@@ -1,9 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import { Order } from "../libraries/OrderStructs.sol";
+import { Order } from "../libraries/Structs.sol";
 
-interface IFeeModule {
+interface IFeeModuleEE {
+
+    /// @notice Emitted when fees are withdrawn from the FeeModule
+    event FeeWithdrawn(address token, address to, uint256 id, uint256 amount);
+
+    /// @notice Emitted when fees are refunded to the order maker
+    event FeeRefunded(address token, address to, uint256 id, uint256 amount);
+}
+
+interface IFeeModule is IFeeModuleEE {
     function matchOrders(
         Order memory takerOrder,
         Order[] memory makerOrders,
@@ -11,7 +20,5 @@ interface IFeeModule {
         uint256[] memory makerFillAmounts
     ) external;
 
-    function withdrawERC20Fees(address token, uint256 amount) external;
-
-    function withdrawERC1155Fees(address token, uint256 id, uint256 amount) external;
+    function withdrawFees(address to, uint256 id, uint256 amount) external;
 }
