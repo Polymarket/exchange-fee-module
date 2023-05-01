@@ -3,17 +3,20 @@ pragma solidity 0.8.15;
 
 import { ERC20 } from "solmate/tokens/ERC20.sol";
 import { IERC20 } from "openzeppelin-contracts/token/ERC20/IERC20.sol";
+import { IERC1155 } from "openzeppelin-contracts/token/ERC1155/IERC1155.sol";
 
 import { TestHelper } from "./TestHelper.sol";
 import { Deployer } from "./Deployer.sol"; 
+import { OrderLib } from "./OrderLib.sol";
 
 import { IConditionalTokens } from "../interfaces/IConditionalTokens.sol";
 import { IExchange } from "../interfaces/IExchange.sol";
 
 import { FeeModule } from "src/FeeModule.sol";
-import { IAuthEE } from "src/interfaces/IAuth.sol";
+import { Order, Side } from "src/libraries/Structs.sol";
+import { CalculatorHelper } from "src/libraries/CalculatorHelper.sol";
 
-import { console } from "forge-std/console.sol";
+import { IAuthEE } from "src/interfaces/IAuth.sol";
 
 contract Token is ERC20 {
     constructor(string memory _name,string memory _symbol) ERC20(_name, _symbol, 6) {}
@@ -72,6 +75,46 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE {
 
         // Add FeeModule as operator to Exchange
         IExchange(exchange).addOperator(address(feeModule));
+        vm.stopPrank();
+
+        // Deal and approve tokens to traders, bob and carla
+        // NOTE: The FeeModule is NOT approved by traders
+        dealAndMint(bob, exchange, 20_000_000_000);
+        dealAndMint(carla, exchange, 20_000_000_000);
+    }
+
+    function createAndSignOrder(
+        uint256 pk,
+        uint256 tokenId,
+        uint256 makerAmount,
+        uint256 takerAmount,
+        Side side,
+        uint256 feeRateBps
+    ) internal returns (Order memory order) {
+        address maker = vm.addr(pk);
+        order = OrderLib._createOrder(maker, tokenId, makerAmount, takerAmount, side, feeRateBps);
+        bytes32 orderHash = IExchange(exchange).hashOrder(order);
+        order = OrderLib._signOrder(pk, orderHash, order);
+    }
+
+    function getExpectedFee(Order memory order, uint256 making) internal returns (uint256) {
+        uint256 taking = CalculatorHelper.calculateTakingAmount(making, order.makerAmount, order.takerAmount);
+        return CalculatorHelper.calculateFee(order.feeRateBps, order.side == Side.BUY ? taking : making, order.makerAmount, order.takerAmount, order.side);
+    }
+
+    function dealAndMint(address to, address spender, uint256 amount) internal {
+        uint256[] memory partition = new uint256[](2);
+        partition[0] = 1;
+        partition[1] = 2;
+
+        vm.startPrank(to);
+        approve(address(usdc), address(ctf), type(uint256).max);
+
+        dealAndApprove(address(usdc), to, spender, amount);
+        IERC1155(address(ctf)).setApprovalForAll(spender, true);
+
+        uint256 splitAmount = amount / 2;
+        IConditionalTokens(ctf).splitPosition(IERC20(address(usdc)), bytes32(0), conditionId, partition, splitAmount);
         vm.stopPrank();
     }
 

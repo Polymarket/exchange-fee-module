@@ -14,6 +14,8 @@ interface IExchange {
 
     function getCtf() external view returns (address);
 
+    function hashOrder(Order memory order) external view returns (bytes32);
+
     function matchOrders(
         Order memory takerOrder,
         Order[] memory makerOrders,
