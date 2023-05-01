@@ -8,6 +8,31 @@ library CalculatorHelper {
 
     uint256 internal constant BPS_DIVISOR = 10_000;
 
+    /// @notice Calculates the fee refund for an Order
+    /// @notice Used to refund Order makers if a user signs a fee into an Order that is > the expeceted fee
+    /// @param orderFeeRateBps      - The fee rate signed into the order by the user
+    /// @param operatorFeeRateBps   - The fee rate chosen by the operator
+    /// @param outcomeTokens    - The number of outcome tokens
+    /// @param makerAmount      - The maker amount of the order
+    /// @param takerAmount      - The taker amount of the order
+    /// @param side             - The side of the order
+    function calcRefund(
+        uint256 orderFeeRateBps,
+        uint256 operatorFeeRateBps,
+        uint256 outcomeTokens,
+        uint256 makerAmount,
+        uint256 takerAmount,
+        Side side
+    ) internal pure returns (uint256) {
+        if (orderFeeRateBps <= operatorFeeRateBps) return 0;
+
+        uint256 fee = calculateFee(orderFeeRateBps, outcomeTokens, makerAmount, takerAmount, side);
+
+        // fee calced using order fee minus fee calced using the operator fee
+        if (operatorFeeRateBps == 0) return fee;
+        return fee - calculateFee(operatorFeeRateBps, outcomeTokens, makerAmount, takerAmount, side);
+    }
+
     function calculateTakingAmount(uint256 makingAmount, uint256 makerAmount, uint256 takerAmount)
         internal
         pure

@@ -17,7 +17,8 @@ interface IFeeModule is IFeeModuleEE {
         Order memory takerOrder,
         Order[] memory makerOrders,
         uint256 takerFillAmount,
-        uint256[] memory makerFillAmounts
+        uint256[] memory makerFillAmounts,
+        uint256 makerFeeRate
     ) external;
 
     function withdrawFees(address to, uint256 id, uint256 amount) external;

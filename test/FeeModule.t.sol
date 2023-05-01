@@ -69,10 +69,11 @@ contract FeeModuleTest is FeeModuleTestHelper {
         emit FeeRefunded(usdc, carla, 0, makerFeeB);
 
         vm.prank(admin);
-        feeModule.matchOrders(buy, sells, 40_000_000, fillAmounts);
+        feeModule.matchOrders(buy, sells, 40_000_000, fillAmounts, 0);
 
         // Assert balance changes
-        
+        // Taker fee collected on the taker order, denominated in YES token
+        assertEq(takerFee, balanceOf1155(ctf, address(feeModule), yes));
     }
 
 

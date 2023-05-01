@@ -85,7 +85,7 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
         dealAndMint(carla, exchange, 20_000_000_000);
     }
 
-    function hashOrder(Order memory order) internal returns (bytes32) {
+    function hashOrder(Order memory order) internal view returns (bytes32) {
         return IExchange(exchange).hashOrder(order);
     }
 
@@ -96,14 +96,13 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
         uint256 takerAmount,
         Side side,
         uint256 feeRateBps
-    ) internal returns (Order memory order) {
+    ) internal view returns (Order memory order) {
         address maker = vm.addr(pk);
         order = OrderLib._createOrder(maker, tokenId, makerAmount, takerAmount, side, feeRateBps);
-        bytes32 orderHash = IExchange(exchange).hashOrder(order);
-        order = OrderLib._signOrder(pk, orderHash, order);
+        order = OrderLib._signOrder(pk, IExchange(exchange).hashOrder(order), order);
     }
 
-    function getExpectedFee(Order memory order, uint256 making) internal returns (uint256) {
+    function getExpectedFee(Order memory order, uint256 making) internal pure returns (uint256) {
         uint256 taking = CalculatorHelper.calculateTakingAmount(making, order.makerAmount, order.takerAmount);
         return CalculatorHelper.calculateFee(order.feeRateBps, order.side == Side.BUY ? taking : making, order.makerAmount, order.takerAmount, order.side);
     }

@@ -3,6 +3,7 @@ pragma solidity 0.8.15;
 
 import {Test, console2 as console, stdStorage, StdStorage} from "forge-std/Test.sol";
 import { ERC20 } from "solmate/tokens/ERC20.sol";
+import { ERC1155 } from "solmate/tokens/ERC1155.sol";
 
 abstract contract TestHelper is Test {
     mapping(address => mapping(address => uint256)) private balanceCheckpoints;
@@ -47,6 +48,10 @@ abstract contract TestHelper is Test {
 
     function balanceOf(address _token, address _who) internal view returns (uint256) {
         return ERC20(_token).balanceOf(_who);
+    }
+
+    function balanceOf1155(address _token, address _who, uint256 _id) internal view returns (uint256) {
+        return ERC1155(_token).balanceOf(_who, _id);
     }
 
     function approve(address _token, address _spender, uint256 _amount) internal {
