@@ -17,7 +17,7 @@ contract FeeModuleTest is FeeModuleTestHelper {
         assertFalse(feeModule.isAdmin(brian));
     }
 
-    function testMatchOrders() public {
+    function testMatchOrdersZeroMakerFee() public {
         // Initialize a match with a buy vs a set of sell maker orders
 
         // Taker order 40c buy with a 10% fee
@@ -74,6 +74,42 @@ contract FeeModuleTest is FeeModuleTestHelper {
         // Assert balance changes
         // Taker fee collected on the taker order, denominated in YES token
         assertEq(takerFee, balanceOf1155(ctf, address(feeModule), yes));
+    }
+
+    function testMatchOrdersNonZeroMakerFee() public {
+        uint256 operatorFeeRate = 30; // 0.3% Maker Fee Rate Bps
+
+        // 50c Buy order
+        uint256 takerFeeRateBps = 500; // 5% Taker fee signed into Order
+        Order memory buy = createAndSignOrder(bobPK, yes, 50_000_000, 100_000_000, Side.BUY, takerFeeRateBps);
+
+        // 50c Sell Maker Order
+        uint256 makerFeeRateBps = 100; // 1% Maker fee signed into Order
+        Order memory sell = createAndSignOrder(carlaPK, yes, 100_000_000, 50_000_000, Side.SELL, makerFeeRateBps);
+        
+        Order[] memory sells = new Order[](1);
+        sells[0] = sell;
+
+        uint256[] memory fillAmounts = new uint256[](1);
+        uint256 makerFill = 100_000_000;
+        uint256 takerFill = 50_000_000;
+        fillAmounts[0] = makerFill;
+        
+        // Operator defined maker fee rate < Order fee rate, so the difference will be refunded
+        // Operator maker fee rate = 0.3%, Order fee rate = 1%
+        uint256 refund = CalculatorHelper.calcRefund(sell.feeRateBps, operatorFeeRate, makerFill, sell.makerAmount, sell.takerAmount, sell.side);
+        console.log("Refund: ");
+        console.log(refund);
+
+        vm.expectEmit();
+        emit FeeRefunded(usdc, carla, 0, refund);
+
+        vm.prank(admin);
+        feeModule.matchOrders(buy, sells, takerFill, fillAmounts, operatorFeeRate);
+    }
+
+    function testWithdraw() public {
+
     }
 
 

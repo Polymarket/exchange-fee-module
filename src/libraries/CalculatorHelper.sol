@@ -2,6 +2,7 @@
 pragma solidity 0.8.15;
 
 import { Order, Side } from "../libraries/Structs.sol";
+import { console } from "forge-std/console.sol";
 
 library CalculatorHelper {
     uint256 internal constant ONE = 10 ** 18;
@@ -23,10 +24,21 @@ library CalculatorHelper {
         uint256 makerAmount,
         uint256 takerAmount,
         Side side
-    ) internal pure returns (uint256) {
+    ) internal view returns (uint256) {
         if (orderFeeRateBps <= operatorFeeRateBps) return 0;
+        console.log("Order fee rate bps: ");
+        console.log(orderFeeRateBps);
+
+        console.log("Operator fee rate bps: ");
+        console.log(operatorFeeRateBps);
 
         uint256 fee = calculateFee(orderFeeRateBps, outcomeTokens, makerAmount, takerAmount, side);
+
+        console.log("Fee amt calced with order fee: ");
+        console.log(fee);
+
+        console.log("Fee amt calced with operator fee: ");
+        console.log(calculateFee(operatorFeeRateBps, outcomeTokens, makerAmount, takerAmount, side));
 
         // fee calced using order fee minus fee calced using the operator fee
         if (operatorFeeRateBps == 0) return fee;
