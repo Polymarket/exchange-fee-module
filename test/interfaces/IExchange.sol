@@ -3,7 +3,32 @@ pragma solidity 0.8.15;
 
 import { Order } from "src/libraries/Structs.sol";
 
-interface IExchange {
+interface IExchangeEE {
+
+    /// @notice Emitted when an order is filled
+    event OrderFilled(
+        bytes32 indexed orderHash,
+        address indexed maker,
+        address indexed taker,
+        uint256 makerAssetId,
+        uint256 takerAssetId,
+        uint256 makerAmountFilled,
+        uint256 takerAmountFilled,
+        uint256 fee
+    );
+
+    /// @notice Emitted when a set of orders is matched
+    event OrdersMatched(
+        bytes32 indexed takerOrderHash,
+        address indexed takerOrderMaker,
+        uint256 makerAssetId,
+        uint256 takerAssetId,
+        uint256 makerAmountFilled,
+        uint256 takerAmountFilled
+    );
+}
+
+interface IExchange is IExchangeEE {
     function registerToken(uint256 token, uint256 complement, bytes32 conditionId) external;
 
     function addOperator(address) external;

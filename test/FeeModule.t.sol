@@ -24,13 +24,13 @@ contract FeeModuleTest is FeeModuleTestHelper {
         uint256 takerFeeRateBps = 1000;
         Order memory buy = createAndSignOrder(bobPK, yes, 40_000_000, 100_000_000, Side.BUY, takerFeeRateBps);
 
-
         // Initialize maker orders with a fee rate bps
         // Meaning Maker orders which are erroneously charged fees and therefore should be refunded
         uint256 makerFeeRateBps = 100; // 1% Maker fee
         
         // SellA: Selling 65 YES tokens for 26 USDC, 40c YES sell, fully filled
         Order memory sellA = createAndSignOrder(carlaPK, yes, 60_000_000, 24_000_000, Side.SELL, makerFeeRateBps);
+        
         // SellB: Selling 100 YES for 40 USDC, 40c YES sell, partialy filled
         Order memory sellB = createAndSignOrder(carlaPK, yes, 100_000_000, 40_000_000, Side.SELL, makerFeeRateBps);
         
@@ -44,16 +44,35 @@ contract FeeModuleTest is FeeModuleTestHelper {
         fillAmounts[0] = sellAMaking;
         fillAmounts[1] = sellBMaking;
 
-        uint256 expectedMakerFeeA = getExpectedFee(sellA, sellAMaking);
-        uint256 expectedMakerFeeB = getExpectedFee(sellB, sellBMaking);
-        console.log("Expected Fee from SellA: ");
-        console.log(expectedMakerFeeA);
+        uint256 takerFee = getExpectedFee(buy, 40_000_000);
+        uint256 makerFeeA = getExpectedFee(sellA, sellAMaking);
+        uint256 makerFeeB = getExpectedFee(sellB, sellBMaking);
         
-        console.log("Expected Fee from SellB: ");
-        console.log(expectedMakerFeeB);
-        
+        // Orders get matched correctly
+        vm.expectEmit();
+        emit OrderFilled(hashOrder(sellA), carla, bob, yes, 0, 60_000_000, 24_000_000, makerFeeA);
+
+        vm.expectEmit();
+        emit OrderFilled(hashOrder(sellB), carla, bob, yes, 0, 40_000_000, 16_000_000, makerFeeB);
+
+        vm.expectEmit();
+        emit OrderFilled(hashOrder(buy), bob, exchange, 0, yes, 40_000_000, 100_000_000, takerFee);
+
+        vm.expectEmit();
+        emit OrdersMatched(hashOrder(buy), bob, 0, yes, 40_000_000, 100_000_000);
+
+        // Maker fees are refunded
+        vm.expectEmit();
+        emit FeeRefunded(usdc, carla, 0, makerFeeA);
+
+        vm.expectEmit();
+        emit FeeRefunded(usdc, carla, 0, makerFeeB);
+
         vm.prank(admin);
         feeModule.matchOrders(buy, sells, 40_000_000, fillAmounts);
+
+        // Assert balance changes
+        
     }
 
 

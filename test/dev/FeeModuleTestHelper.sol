@@ -10,19 +10,21 @@ import { Deployer } from "./Deployer.sol";
 import { OrderLib } from "./OrderLib.sol";
 
 import { IConditionalTokens } from "../interfaces/IConditionalTokens.sol";
-import { IExchange } from "../interfaces/IExchange.sol";
+import { IExchangeEE, IExchange } from "../interfaces/IExchange.sol";
 
 import { FeeModule } from "src/FeeModule.sol";
 import { Order, Side } from "src/libraries/Structs.sol";
 import { CalculatorHelper } from "src/libraries/CalculatorHelper.sol";
 
 import { IAuthEE } from "src/interfaces/IAuth.sol";
+import { IFeeModuleEE } from "src/interfaces/IFeeModule.sol";
+
 
 contract Token is ERC20 {
     constructor(string memory _name,string memory _symbol) ERC20(_name, _symbol, 6) {}
 }
 
-contract FeeModuleTestHelper is TestHelper, IAuthEE {
+contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
     address public admin = alice;
 
     // Order Signers
@@ -81,6 +83,10 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE {
         // NOTE: The FeeModule is NOT approved by traders
         dealAndMint(bob, exchange, 20_000_000_000);
         dealAndMint(carla, exchange, 20_000_000_000);
+    }
+
+    function hashOrder(Order memory order) internal returns (bytes32) {
+        return IExchange(exchange).hashOrder(order);
     }
 
     function createAndSignOrder(
