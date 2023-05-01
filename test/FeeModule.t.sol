@@ -98,7 +98,7 @@ contract FeeModuleTest is FeeModuleTestHelper {
         // Operator defined maker fee rate < Order fee rate, so the difference will be refunded
         // Operator maker fee rate = 0.3%, Order fee rate = 1%
         uint256 refund = CalculatorHelper.calcRefund(sell.feeRateBps, operatorFeeRate, makerFill, sell.makerAmount, sell.takerAmount, sell.side);
-        
+
         vm.expectEmit();
         emit FeeRefunded(usdc, carla, 0, refund);
 
@@ -106,8 +106,85 @@ contract FeeModuleTest is FeeModuleTestHelper {
         feeModule.matchOrders(buy, sells, takerFill, fillAmounts, operatorFeeRate);
     }
 
-    function testWithdraw() public {
 
+    function testMatchOrdersNoRefundSameFee() public {
+        uint256 takerFeeRateBps = 500;
+        Order memory buy = createAndSignOrder(bobPK, yes, 50_000_000, 100_000_000, Side.BUY, takerFeeRateBps);
+
+        uint256 makerFeeRateBps = 30; 
+        Order memory sell = createAndSignOrder(carlaPK, yes, 100_000_000, 50_000_000, Side.SELL, makerFeeRateBps);
+        
+        Order[] memory sells = new Order[](1);
+        sells[0] = sell;
+
+        uint256[] memory fillAmounts = new uint256[](1);
+        uint256 makerFill = 100_000_000;
+        uint256 takerFill = 50_000_000;
+        fillAmounts[0] = makerFill;
+        
+        uint256 operatorFeeRate = 30;
+
+        // Order fee matches operator fee, no refund
+        assertEq(CalculatorHelper.calcRefund(sell.feeRateBps, operatorFeeRate, makerFill, sell.makerAmount, sell.takerAmount, sell.side), 0);
+
+        // Orders matched without emitting the refund event
+        vm.prank(admin);
+        feeModule.matchOrders(buy, sells, takerFill, fillAmounts, operatorFeeRate);
+    }
+
+    function testMatchOrdersNoRefundLowerFee() public {
+        uint256 takerFeeRateBps = 500;
+        Order memory buy = createAndSignOrder(bobPK, yes, 50_000_000, 100_000_000, Side.BUY, takerFeeRateBps);
+
+        uint256 makerFeeRateBps = 30; 
+        Order memory sell = createAndSignOrder(carlaPK, yes, 100_000_000, 50_000_000, Side.SELL, makerFeeRateBps);
+        
+        Order[] memory sells = new Order[](1);
+        sells[0] = sell;
+
+        uint256[] memory fillAmounts = new uint256[](1);
+        uint256 makerFill = 100_000_000;
+        uint256 takerFill = 50_000_000;
+        fillAmounts[0] = makerFill;
+        
+        uint256 operatorFeeRate = 100;
+
+        // Order fee < operator fee, no refund
+        assertEq(CalculatorHelper.calcRefund(sell.feeRateBps, operatorFeeRate, makerFill, sell.makerAmount, sell.takerAmount, sell.side), 0);
+
+        // Orders matched without emitting the refund event
+        vm.prank(admin);
+        feeModule.matchOrders(buy, sells, takerFill, fillAmounts, operatorFeeRate);
+    }
+
+    function testWithdrawERC1155() public {
+        _transfer(ctf, bob, address(feeModule), yes, 100_000_000);
+        
+        uint256 amt = balanceOf1155(ctf, address(feeModule), yes);
+        vm.expectEmit();
+        emit FeeWithdrawn(ctf, admin, yes, amt);
+        
+        // Withdraw tokens
+        vm.prank(admin);
+        feeModule.withdrawFees(admin, yes, amt);
+
+        assertEq(balanceOf1155(ctf, admin, yes), amt);
+        assertEq(balanceOf1155(ctf, address(feeModule), yes), 0);
+    }
+
+    function testWithdrawERC20() public {
+        _transfer(usdc, bob, address(feeModule), 0, 100_000_000);
+        
+        uint256 amt = balanceOf(usdc, address(feeModule));
+        vm.expectEmit();
+        emit FeeWithdrawn(usdc, admin, 0, amt);
+        
+        // Withdraw tokens
+        vm.prank(admin);
+        feeModule.withdrawFees(admin, 0, amt);
+
+        assertEq(balanceOf(usdc, admin), amt);
+        assertEq(balanceOf(usdc, address(feeModule)), 0);
     }
 
 

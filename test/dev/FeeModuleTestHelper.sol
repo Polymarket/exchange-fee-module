@@ -2,6 +2,7 @@
 pragma solidity 0.8.15;
 
 import { ERC20 } from "solmate/tokens/ERC20.sol";
+import { ERC1155 } from "solmate/tokens/ERC1155.sol";
 import { IERC20 } from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import { IERC1155 } from "openzeppelin-contracts/token/ERC1155/IERC1155.sol";
 
@@ -120,6 +121,16 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
 
         uint256 splitAmount = amount / 2;
         IConditionalTokens(ctf).splitPosition(IERC20(address(usdc)), bytes32(0), conditionId, partition, splitAmount);
+        vm.stopPrank();
+    }
+
+    function _transfer(address token, address from, address to, uint256 id, uint256 amount) internal {
+        vm.startPrank(from);
+        if(id == 0) {
+            ERC20(token).transfer(to, amount);
+        } else {
+            ERC1155(token).safeTransferFrom(from, to, id, amount, "");
+        }
         vm.stopPrank();
     }
 
