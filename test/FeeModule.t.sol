@@ -77,7 +77,7 @@ contract FeeModuleTest is FeeModuleTestHelper {
     }
 
     function testMatchOrdersNonZeroMakerFee() public {
-        uint256 operatorFeeRate = 30; // 0.3% Maker Fee Rate Bps
+        uint256 operatorFeeRate = 30; // 0.3% Maker Fee Rate
 
         // 50c Buy order
         uint256 takerFeeRateBps = 500; // 5% Taker fee signed into Order
@@ -98,9 +98,7 @@ contract FeeModuleTest is FeeModuleTestHelper {
         // Operator defined maker fee rate < Order fee rate, so the difference will be refunded
         // Operator maker fee rate = 0.3%, Order fee rate = 1%
         uint256 refund = CalculatorHelper.calcRefund(sell.feeRateBps, operatorFeeRate, makerFill, sell.makerAmount, sell.takerAmount, sell.side);
-        console.log("Refund: ");
-        console.log(refund);
-
+        
         vm.expectEmit();
         emit FeeRefunded(usdc, carla, 0, refund);
 
