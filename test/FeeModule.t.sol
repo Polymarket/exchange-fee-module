@@ -73,6 +73,31 @@ contract FeeModuleTest is FeeModuleTestHelper {
         assertEq(takerFee, balanceOf1155(ctf, address(feeModule), yes));
     }
 
+    function testMatchOrdersPartialFill() public {
+        // Call match orders using a partially filled order
+        testMatchOrdersZeroMakerFee();
+        uint256 makerFee = 100;
+        uint256 takerFee = 1000;
+        uint256 operatorFee = 0;
+
+        // Partially filled YES sell
+        Order memory yesSell = createAndSignOrder(carlaPK, yes, 100_000_000, 40_000_000, Side.SELL, makerFee);
+        Order[] memory makerOrders= new Order[](1);
+        makerOrders[0] = yesSell;
+
+        uint256[] memory fillAmounts = new uint256[](1);
+        fillAmounts[0] = 60_000_000;
+
+        // New NO sell taker order
+        Order memory noSell = createAndSignOrder(bobPK, no, 60_000_000, 24_000_000, Side.SELL, takerFee);
+
+        vm.expectEmit();
+        emit FeeRefunded(usdc, carla, 0, 240000);
+
+        vm.prank(admin);
+        feeModule.matchOrders(noSell, makerOrders, 60_000_000, fillAmounts, operatorFee);
+    }
+
     function testMatchOrdersNonZeroMakerFee() public {
         uint256 operatorFeeRate = 30; // 0.3% Maker Fee Rate
 
@@ -163,6 +188,10 @@ contract FeeModuleTest is FeeModuleTestHelper {
         // Orders matched without emitting the refund event
         vm.prank(admin);
         feeModule.matchOrders(buy, sells, takerFill, fillAmounts, operatorFeeRate);
+    }
+
+    function testMatchOrdersFuzz() public {
+
     }
 
     function testWithdrawERC1155() public {

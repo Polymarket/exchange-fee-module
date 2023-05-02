@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import { Order } from "src/libraries/Structs.sol";
+import { Order, OrderStatus } from "src/libraries/Structs.sol";
 
 interface IExchangeEE {
     /// @notice Emitted when an order is filled
@@ -39,6 +39,8 @@ interface IExchange is IExchangeEE {
     function getCtf() external view returns (address);
 
     function hashOrder(Order memory order) external view returns (bytes32);
+
+    function getOrderStatus(bytes32 orderHash) external view returns (OrderStatus memory);
 
     function matchOrders(
         Order memory takerOrder,

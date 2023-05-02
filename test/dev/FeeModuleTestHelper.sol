@@ -14,7 +14,7 @@ import { IConditionalTokens } from "../interfaces/IConditionalTokens.sol";
 import { IExchangeEE, IExchange } from "../interfaces/IExchange.sol";
 
 import { FeeModule } from "src/FeeModule.sol";
-import { Order, Side } from "src/libraries/Structs.sol";
+import { Order, Side, OrderStatus } from "src/libraries/Structs.sol";
 import { CalculatorHelper } from "src/libraries/CalculatorHelper.sol";
 
 import { IAuthEE } from "src/interfaces/IAuth.sol";
@@ -87,6 +87,10 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
 
     function hashOrder(Order memory order) internal view returns (bytes32) {
         return IExchange(exchange).hashOrder(order);
+    }
+
+    function getOrderStatus(bytes32 orderHash) internal view returns (OrderStatus memory) {
+        return IExchange(exchange).getOrderStatus(orderHash);
     }
 
     function createAndSignOrder(

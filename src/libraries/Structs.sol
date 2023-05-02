@@ -17,6 +17,11 @@ enum SignatureType {
     POLY_GNOSIS_SAFE
 }
 
+struct OrderStatus {
+    bool isFilledOrCancelled;
+    uint256 remaining;
+}
+
 struct Order {
     /// @notice Unique salt to ensure entropy
     uint256 salt;
