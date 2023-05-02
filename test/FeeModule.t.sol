@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import "../src/FeeModule.sol";
-
-import { Side, Order } from "../src/libraries/Structs.sol";
+import "src/FeeModule.sol";
+import { Side, Order } from "src/libraries/Structs.sol";
 
 import { FeeModuleTestHelper } from "./dev/FeeModuleTestHelper.sol";
-
-import { console } from "forge-std/console.sol";
 
 contract FeeModuleTest is FeeModuleTestHelper {
     function testSetup() public {
@@ -186,6 +183,4 @@ contract FeeModuleTest is FeeModuleTestHelper {
         assertEq(balanceOf(usdc, admin), amt);
         assertEq(balanceOf(usdc, address(feeModule)), 0);
     }
-
-
 }
