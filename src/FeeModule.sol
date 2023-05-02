@@ -19,7 +19,7 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
     /// @notice The Exchange contract
     IExchange public immutable exchange;
 
-    /// @notice The collateral token
+    /// @notice The Collateral token
     address public immutable collateral;
 
     /// @notice The CTF contract
@@ -93,8 +93,6 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
             order.side
         );
 
-        // If buy, proceeds, and fees, will be denominated in ERC1155 token
-        // If sell, proceeds, and fees, will be denominated in the ERC20 token
         uint256 id = order.side == Side.BUY ? order.tokenId : 0;
         address token = order.side == Side.BUY ? ctf : collateral;
 
