@@ -4,7 +4,6 @@ pragma solidity 0.8.15;
 import { Order } from "src/libraries/Structs.sol";
 
 interface IExchangeEE {
-
     /// @notice Emitted when an order is filled
     event OrderFilled(
         bytes32 indexed orderHash,
@@ -34,7 +33,7 @@ interface IExchange is IExchangeEE {
     function addOperator(address) external;
 
     function addAdmin(address) external;
-    
+
     function getCollateral() external view returns (address);
 
     function getCtf() external view returns (address);
@@ -47,5 +46,4 @@ interface IExchange is IExchangeEE {
         uint256 takerFillAmount,
         uint256[] memory makerFillAmounts
     ) external;
-
 }

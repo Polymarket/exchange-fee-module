@@ -7,7 +7,7 @@ import { IERC20 } from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import { IERC1155 } from "openzeppelin-contracts/token/ERC1155/IERC1155.sol";
 
 import { TestHelper } from "./TestHelper.sol";
-import { Deployer } from "./Deployer.sol"; 
+import { Deployer } from "./Deployer.sol";
 import { OrderLib } from "./OrderLib.sol";
 
 import { IConditionalTokens } from "../interfaces/IConditionalTokens.sol";
@@ -20,9 +20,8 @@ import { CalculatorHelper } from "src/libraries/CalculatorHelper.sol";
 import { IAuthEE } from "src/interfaces/IAuth.sol";
 import { IFeeModuleEE } from "src/interfaces/IFeeModule.sol";
 
-
 contract Token is ERC20 {
-    constructor(string memory _name,string memory _symbol) ERC20(_name, _symbol, 6) {}
+    constructor(string memory _name, string memory _symbol) ERC20(_name, _symbol, 6) { }
 }
 
 contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
@@ -37,10 +36,10 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
     // Tokens
     address public usdc;
     address public ctf;
-    
+
     // Contracts
     address public exchange;
-    
+
     // Fee Module
     FeeModule public feeModule;
 
@@ -105,7 +104,9 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
 
     function getExpectedFee(Order memory order, uint256 making) internal pure returns (uint256) {
         uint256 taking = CalculatorHelper.calculateTakingAmount(making, order.makerAmount, order.takerAmount);
-        return CalculatorHelper.calculateFee(order.feeRateBps, order.side == Side.BUY ? taking : making, order.makerAmount, order.takerAmount, order.side);
+        return CalculatorHelper.calculateFee(
+            order.feeRateBps, order.side == Side.BUY ? taking : making, order.makerAmount, order.takerAmount, order.side
+        );
     }
 
     function dealAndMint(address to, address spender, uint256 amount) internal {
@@ -126,11 +127,8 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
 
     function _transfer(address token, address from, address to, uint256 id, uint256 amount) internal {
         vm.startPrank(from);
-        if(id == 0) {
-            ERC20(token).transfer(to, amount);
-        } else {
-            ERC1155(token).safeTransferFrom(from, to, id, amount, "");
-        }
+        if (id == 0) ERC20(token).transfer(to, amount);
+        else ERC1155(token).safeTransferFrom(from, to, id, amount, "");
         vm.stopPrank();
     }
 
@@ -145,4 +143,3 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
         return ictf.getPositionId(IERC20(address(usdc)), ictf.getCollectionId(bytes32(0), conditionId, indexSet));
     }
 }
-

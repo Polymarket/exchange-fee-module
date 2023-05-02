@@ -8,11 +8,14 @@ import { Order, Side, SignatureType } from "src/libraries/Structs.sol";
 library OrderLib {
     Vm public constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
-    function _createOrder(address maker, uint256 tokenId, uint256 makerAmount, uint256 takerAmount, Side side, uint256 feeRateBps)
-        internal
-        pure
-        returns (Order memory)
-    {
+    function _createOrder(
+        address maker,
+        uint256 tokenId,
+        uint256 makerAmount,
+        uint256 takerAmount,
+        Side side,
+        uint256 feeRateBps
+    ) internal pure returns (Order memory) {
         Order memory order = Order({
             salt: 1,
             signer: maker,

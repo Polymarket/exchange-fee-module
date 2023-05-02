@@ -30,13 +30,7 @@ library TransferHelper {
     /// @param to       - The destination address of the transfer
     /// @param id       - The tokenId of the token to be transferred
     /// @param amount   - The amount to be transferred
-    function _transferFromERC1155(
-        address token,
-        address from,
-        address to,
-        uint256 id,
-        uint256 amount
-    ) internal {
+    function _transferFromERC1155(address token, address from, address to, uint256 id, uint256 amount) internal {
         ERC1155(token).safeTransferFrom(from, to, id, amount, "");
     }
 }

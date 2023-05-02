@@ -4,7 +4,6 @@ pragma solidity 0.8.15;
 import { Order } from "../libraries/Structs.sol";
 
 interface IFeeModuleEE {
-
     /// @notice Emitted when fees are withdrawn from the FeeModule
     event FeeWithdrawn(address token, address to, uint256 id, uint256 amount);
 

@@ -4,7 +4,6 @@ pragma solidity 0.8.15;
 import { Order } from "../libraries/Structs.sol";
 
 interface IExchange {
-
     function getCollateral() external view returns (address);
 
     function getCtf() external view returns (address);

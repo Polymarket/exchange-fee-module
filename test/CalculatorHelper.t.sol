@@ -6,9 +6,7 @@ import { Test } from "forge-std/Test.sol";
 import { Side } from "src/libraries/Structs.sol";
 import { CalculatorHelper } from "src/libraries/CalculatorHelper.sol";
 
-
 contract CalculatorHelperTest is Test {
-
     function testCalcRefund(
         uint8 orderFeeRate,
         uint8 operatorFeeRate,
@@ -25,5 +23,4 @@ contract CalculatorHelperTest is Test {
 
         CalculatorHelper.calcRefund(orderFeeRate, operatorFeeRate, outcomeTokens, makerAmount, takerAmount, side);
     }
-
 }

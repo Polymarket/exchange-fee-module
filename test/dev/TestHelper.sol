@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import {Test, console2 as console, stdStorage, StdStorage} from "forge-std/Test.sol";
+import { Test, console2 as console, stdStorage, StdStorage } from "forge-std/Test.sol";
 import { ERC20 } from "solmate/tokens/ERC20.sol";
 import { ERC1155 } from "solmate/tokens/ERC1155.sol";
 

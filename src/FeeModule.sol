@@ -16,7 +16,6 @@ import { CalculatorHelper } from "./libraries/CalculatorHelper.sol";
 /// @notice Proxies the CTFExchange contract and refunds maker orders
 /// @author Jon Amenechi (jon@polymarket.com)
 contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
-    
     /// @notice The Exchange contract
     IExchange public immutable exchange;
 
@@ -53,13 +52,13 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
     }
 
     /// @notice Withdraw collected fees
-    /// @param id       - The tokenID to be withdrawn. If 0, will be the collateral token. 
+    /// @param id       - The tokenID to be withdrawn. If 0, will be the collateral token.
     /// @param amount   - The amount to be withdrawn
     function withdrawFees(address to, uint256 id, uint256 amount) external onlyAdmin {
         address token = id == 0 ? collateral : ctf;
         _transfer(token, address(this), to, id, amount);
         emit FeeWithdrawn(token, to, id, amount);
-     }
+    }
 
     /// @notice Refund fees for a set of orders
     /// @param orders       - The array of orders
@@ -86,10 +85,11 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
 
         // Calculate refund for the order, if any
         uint256 refund = CalculatorHelper.calcRefund(
-            order.feeRateBps, 
-            feeRate, 
-            order.side == Side.BUY ? taking : making, 
-            order.makerAmount, order.takerAmount, 
+            order.feeRateBps,
+            feeRate,
+            order.side == Side.BUY ? taking : making,
+            order.makerAmount,
+            order.takerAmount,
             order.side
         );
 
@@ -97,9 +97,9 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
         // If sell, proceeds, and fees, will be denominated in the ERC20 token
         uint256 id = order.side == Side.BUY ? order.tokenId : 0;
         address token = order.side == Side.BUY ? ctf : collateral;
-        
+
         // If the refund is non-zero, transfer it to the order maker
-        if(refund > 0) {
+        if (refund > 0) {
             _transfer(token, address(this), order.maker, id, refund);
             emit FeeRefunded(token, order.maker, id, refund);
         }

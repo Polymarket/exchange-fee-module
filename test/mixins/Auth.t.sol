@@ -7,7 +7,7 @@ import { Auth } from "src/mixins/Auth.sol";
 import { IAuthEE } from "src/interfaces/IAuth.sol";
 
 contract AuthHarness is Auth {
-    function useOnlyAdmin() public onlyAdmin {}
+    function useOnlyAdmin() public onlyAdmin { }
 }
 
 contract AuthTest is Test, IAuthEE {

@@ -66,8 +66,7 @@ library CalculatorHelper {
                 if (side == Side.BUY) {
                     // Fee charged on Token Proceeds:
                     // baseRate * min(price, 1-price) * (outcomeTokens/price)
-                    fee = (feeRateBps * min(price, ONE - price) * outcomeTokens)
-                        / (price * BPS_DIVISOR);
+                    fee = (feeRateBps * min(price, ONE - price) * outcomeTokens) / (price * BPS_DIVISOR);
                 } else {
                     // Fee charged on Collateral proceeds:
                     // baseRate * min(price, 1-price) * outcomeTokens
@@ -85,11 +84,7 @@ library CalculatorHelper {
         return _calculatePrice(order.makerAmount, order.takerAmount, order.side);
     }
 
-    function _calculatePrice(uint256 makerAmount, uint256 takerAmount, Side side)
-        internal
-        pure
-        returns (uint256)
-    {
+    function _calculatePrice(uint256 makerAmount, uint256 takerAmount, Side side) internal pure returns (uint256) {
         if (side == Side.BUY) return takerAmount != 0 ? makerAmount * ONE / takerAmount : 0;
         return makerAmount != 0 ? takerAmount * ONE / makerAmount : 0;
     }
