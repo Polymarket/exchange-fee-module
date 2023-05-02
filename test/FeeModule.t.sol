@@ -190,8 +190,39 @@ contract FeeModuleTest is FeeModuleTestHelper {
         feeModule.matchOrders(buy, sells, takerFill, fillAmounts, operatorFeeRate);
     }
 
-    function testMatchOrdersFuzz() public {
+    function testMatchOrdersFuzz(
+        uint64 fillAmount,
+        uint16 takerFeeRateBps,
+        uint16 makerFeeRateBps,
+        uint16 operatorFeeRateBps
+    ) public {
+        uint256 makerAmount = 50_000_000;
+        uint256 takerAmount = 100_000_000;
+        
+        vm.assume(
+            fillAmount <= makerAmount && 
+            takerFeeRateBps < getMaxFeeRate() &&
+            makerFeeRateBps < getMaxFeeRate() &&
+            operatorFeeRateBps < getMaxFeeRate()
+        );
 
+        Order memory buy = createAndSignOrder(bobPK, yes, makerAmount, takerAmount, Side.BUY, uint256(takerFeeRateBps));
+        Order memory sell = createAndSignOrder(carlaPK, yes, takerAmount, makerAmount, Side.SELL, uint256(makerFeeRateBps));
+
+        Order[] memory makerOrders = new Order[](1);
+        makerOrders[0] = sell;
+
+        uint256[] memory fillAmounts = new uint256[](1);
+        uint256 makerFillAmount = fillAmount * takerAmount / makerAmount;
+        fillAmounts[0] = makerFillAmount;
+
+        uint256 refund = getRefund(sell, makerFillAmount, operatorFeeRateBps);
+        if (refund > 0) {
+            vm.expectEmit();
+            emit FeeRefunded(usdc, carla, 0, refund);
+        }
+        vm.prank(admin);
+        feeModule.matchOrders(buy, makerOrders, fillAmount, fillAmounts, operatorFeeRateBps);
     }
 
     function testWithdrawERC1155() public {

@@ -93,6 +93,10 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
         return IExchange(exchange).getOrderStatus(orderHash);
     }
 
+    function getMaxFeeRate() internal view returns (uint256) {
+        return IExchange(exchange).getMaxFeeRate();
+    }
+
     function createAndSignOrder(
         uint256 pk,
         uint256 tokenId,
@@ -110,6 +114,18 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
         uint256 taking = CalculatorHelper.calculateTakingAmount(making, order.makerAmount, order.takerAmount);
         return CalculatorHelper.calculateFee(
             order.feeRateBps, order.side == Side.BUY ? taking : making, order.makerAmount, order.takerAmount, order.side
+        );
+    }
+
+    function getRefund(Order memory order, uint256 making, uint256 operatorFeeRateBps) internal pure returns (uint256) {
+        uint256 taking = CalculatorHelper.calculateTakingAmount(making, order.makerAmount, order.takerAmount);
+        return CalculatorHelper.calcRefund(
+            order.feeRateBps,
+            operatorFeeRateBps, 
+            order.side == Side.BUY ? taking : making,
+            order.makerAmount,
+            order.takerAmount,
+            order.side
         );
     }
 

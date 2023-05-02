@@ -42,6 +42,8 @@ interface IExchange is IExchangeEE {
 
     function getOrderStatus(bytes32 orderHash) external view returns (OrderStatus memory);
 
+    function getMaxFeeRate() external view returns (uint256);
+
     function matchOrders(
         Order memory takerOrder,
         Order[] memory makerOrders,
