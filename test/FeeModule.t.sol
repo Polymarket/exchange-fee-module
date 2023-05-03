@@ -25,7 +25,7 @@ contract FeeModuleTest is FeeModuleTestHelper {
         // Meaning Maker orders which are erroneously charged fees and therefore should be refunded
         uint256 makerFeeRateBps = 100; // 1% Maker fee
 
-        // SellA: Selling 65 YES tokens for 26 USDC, 40c YES sell, fully filled
+        // SellA: Selling 60 YES tokens for 24 USDC, 40c YES sell, fully filled
         Order memory sellA = createAndSignOrder(carlaPK, yes, 60_000_000, 24_000_000, Side.SELL, makerFeeRateBps);
 
         // SellB: Selling 100 YES for 40 USDC, 40c YES sell, partialy filled
@@ -69,7 +69,7 @@ contract FeeModuleTest is FeeModuleTestHelper {
         feeModule.matchOrders(buy, sells, 40_000_000, fillAmounts, 0);
 
         // Assert balance changes
-        // Taker fee collected on the taker order, denominated in YES token
+        // Taker fee collected on the taker order on the fee module, denominated in YES token
         assertEq(takerFee, balanceOf1155(ctf, address(feeModule), yes));
     }
 
