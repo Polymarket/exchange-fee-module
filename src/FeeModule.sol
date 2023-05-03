@@ -68,7 +68,9 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
         uint256 length = orders.length;
         uint256 i = 0;
         for (; i < length;) {
-            _refundFee(orders[i], fillAmounts[i], feeRate);
+            if(orders[i].feeRateBps > feeRate) {
+                _refundFee(orders[i], fillAmounts[i], feeRate);
+            }
             unchecked {
                 ++i;
             }
@@ -81,13 +83,12 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
     /// @param feeRate      - The fee rate to be charged to maker orders
     function _refundFee(Order memory order, uint256 fillAmount, uint256 feeRate) internal {
         uint256 making = fillAmount;
-        uint256 taking = CalculatorHelper.calculateTakingAmount(making, order.makerAmount, order.takerAmount);
 
         // Calculate refund for the order, if any
         uint256 refund = CalculatorHelper.calcRefund(
             order.feeRateBps,
             feeRate,
-            order.side == Side.BUY ? taking : making,
+            order.side == Side.BUY ? CalculatorHelper.calculateTakingAmount(making, order.makerAmount, order.takerAmount) : making,
             order.makerAmount,
             order.takerAmount,
             order.side

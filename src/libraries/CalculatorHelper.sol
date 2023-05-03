@@ -80,10 +80,6 @@ library CalculatorHelper {
         return a < b ? a : b;
     }
 
-    function calculatePrice(Order memory order) internal pure returns (uint256) {
-        return _calculatePrice(order.makerAmount, order.takerAmount, order.side);
-    }
-
     function _calculatePrice(uint256 makerAmount, uint256 takerAmount, Side side) internal pure returns (uint256) {
         if (side == Side.BUY) return takerAmount != 0 ? makerAmount * ONE / takerAmount : 0;
         return makerAmount != 0 ? takerAmount * ONE / makerAmount : 0;
