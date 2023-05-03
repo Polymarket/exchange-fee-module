@@ -82,13 +82,11 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
     /// @param fillAmount   - The fill amount for the order
     /// @param feeRate      - The fee rate to be charged to maker orders
     function _refundFee(Order memory order, uint256 fillAmount, uint256 feeRate) internal {
-        uint256 making = fillAmount;
-
         // Calculate refund for the order, if any
         uint256 refund = CalculatorHelper.calcRefund(
             order.feeRateBps,
             feeRate,
-            order.side == Side.BUY ? CalculatorHelper.calculateTakingAmount(making, order.makerAmount, order.takerAmount) : making,
+            order.side == Side.BUY ? CalculatorHelper.calculateTakingAmount(fillAmount, order.makerAmount, order.takerAmount) : fillAmount,
             order.makerAmount,
             order.takerAmount,
             order.side
