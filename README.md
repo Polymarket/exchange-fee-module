@@ -23,3 +23,4 @@ GTC taker orders that are marketable, but are not completely filled, will rest o
 But, the feeRateBps field is signed into the Order by the user, without knowing whether or not the Order will remain a taker order or a maker order. Since maker orders are usually charged (much) lower fees than taker orders, the order could be overcharged.
 
 The FeeModule will refund maker orders which are overcharged.
+
