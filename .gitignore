@@ -13,3 +13,6 @@ broadcast/
 
 # Python virtual environment
 env/
+
+# vscode
+.vscode/

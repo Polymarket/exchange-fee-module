@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity 0.8.30;
 
 import "src/FeeModule.sol";
 import { Side, Order } from "src/libraries/Structs.sol";
@@ -82,7 +82,7 @@ contract FeeModuleTest is FeeModuleTestHelper {
 
         // Partially filled YES sell
         Order memory yesSell = createAndSignOrder(carlaPK, yes, 100_000_000, 40_000_000, Side.SELL, makerFee);
-        Order[] memory makerOrders= new Order[](1);
+        Order[] memory makerOrders = new Order[](1);
         makerOrders[0] = yesSell;
 
         uint256[] memory fillAmounts = new uint256[](1);
@@ -198,16 +198,15 @@ contract FeeModuleTest is FeeModuleTestHelper {
     ) public {
         uint256 makerAmount = 50_000_000;
         uint256 takerAmount = 100_000_000;
-        
+
         vm.assume(
-            fillAmount <= makerAmount && 
-            takerFeeRateBps < getMaxFeeRate() &&
-            makerFeeRateBps < getMaxFeeRate() &&
-            operatorFeeRateBps < getMaxFeeRate()
+            fillAmount <= makerAmount && takerFeeRateBps < getMaxFeeRate() && makerFeeRateBps < getMaxFeeRate()
+                && operatorFeeRateBps < getMaxFeeRate()
         );
 
         Order memory buy = createAndSignOrder(bobPK, yes, makerAmount, takerAmount, Side.BUY, uint256(takerFeeRateBps));
-        Order memory sell = createAndSignOrder(carlaPK, yes, takerAmount, makerAmount, Side.SELL, uint256(makerFeeRateBps));
+        Order memory sell =
+            createAndSignOrder(carlaPK, yes, takerAmount, makerAmount, Side.SELL, uint256(makerFeeRateBps));
 
         Order[] memory makerOrders = new Order[](1);
         makerOrders[0] = sell;

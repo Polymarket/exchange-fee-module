@@ -8,7 +8,7 @@ echo "Deploy args:
 Exchange: $EXCHANGE
 "
 
-OUTPUT="$(forge script Deploy \
+OUTPUT="$(forge script DeployFeeModule \
     --private-key $PK \
     --rpc-url $RPC_URL \
     --json \

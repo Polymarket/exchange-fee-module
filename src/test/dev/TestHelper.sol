@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity 0.8.30;
 
-import { Test, console2 as console, stdStorage, StdStorage } from "forge-std/Test.sol";
-import { ERC20 } from "solmate/tokens/ERC20.sol";
-import { ERC1155 } from "solmate/tokens/ERC1155.sol";
+import { Test, console2 as console, stdStorage, StdStorage } from "lib/forge-std/src/Test.sol";
+import { ERC20 } from "lib/solmate/src/tokens/ERC20.sol";
+import { ERC1155 } from "lib/solmate/src/tokens/ERC1155.sol";
 
 abstract contract TestHelper is Test {
     mapping(address => mapping(address => uint256)) private balanceCheckpoints;
