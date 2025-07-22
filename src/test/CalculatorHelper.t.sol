@@ -7,20 +7,20 @@ import { Side } from "src/libraries/Structs.sol";
 import { CalculatorHelper } from "src/libraries/CalculatorHelper.sol";
 
 contract CalculatorHelperTest is Test {
-    function testCalcRefund(
+    function testcalculateRefund(
         uint8 orderFeeRate,
         uint8 operatorFeeRate,
         uint64 outcomeTokens,
         uint64 makerAmount,
         uint64 takerAmount,
         uint8 sideInt
-    ) public {
+    ) public pure {
         vm.assume(orderFeeRate >= 0);
         vm.assume(operatorFeeRate >= 0);
         vm.assume(makerAmount > 0 && outcomeTokens <= makerAmount);
         vm.assume(sideInt <= 1);
         Side side = Side(sideInt);
 
-        CalculatorHelper.calcRefund(orderFeeRate, operatorFeeRate, outcomeTokens, makerAmount, takerAmount, side);
+        CalculatorHelper.calculateRefund(orderFeeRate, operatorFeeRate, outcomeTokens, makerAmount, takerAmount, side);
     }
 }

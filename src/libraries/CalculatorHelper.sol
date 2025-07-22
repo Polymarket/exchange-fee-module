@@ -16,7 +16,7 @@ library CalculatorHelper {
     /// @param makerAmount          - The maker amount of the order
     /// @param takerAmount          - The taker amount of the order
     /// @param side                 - The side of the order
-    function calcRefund(
+    function calculateRefund(
         uint256 orderFeeRateBps,
         uint256 operatorFeeRateBps,
         uint256 outcomeTokens,
@@ -26,11 +26,12 @@ library CalculatorHelper {
     ) internal pure returns (uint256) {
         if (orderFeeRateBps <= operatorFeeRateBps) return 0;
 
-        uint256 fee = calculateFee(orderFeeRateBps, outcomeTokens, makerAmount, takerAmount, side);
+        // Calculates the fee charged by the exchange
+        uint256 exchangeFeeAmount = calculateFee(orderFeeRateBps, outcomeTokens, makerAmount, takerAmount, side);
 
-        // fee calced using order fee minus fee calced using the operator fee
-        if (operatorFeeRateBps == 0) return fee;
-        return fee - calculateFee(operatorFeeRateBps, outcomeTokens, makerAmount, takerAmount, side);
+        if (operatorFeeRateBps == 0) return exchangeFeeAmount;
+        uint256 operatorFeeAmount = calculateFee(operatorFeeRateBps, outcomeTokens, makerAmount, takerAmount, side);
+        return exchangeFeeAmount - operatorFeeAmount;
     }
 
     /// @notice Calculates the taking amount, i.e the amount of tokens to be received

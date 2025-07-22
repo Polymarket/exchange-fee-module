@@ -123,7 +123,7 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
         returns (uint256)
     {
         uint256 taking = CalculatorHelper.calculateTakingAmount(making, order.makerAmount, order.takerAmount);
-        return CalculatorHelper.calcRefund(
+        return CalculatorHelper.calculateRefund(
             order.feeRateBps,
             operatorFeeRateBps,
             order.side == Side.BUY ? taking : making,
