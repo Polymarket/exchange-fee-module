@@ -7,7 +7,7 @@ import { Side } from "src/libraries/Structs.sol";
 import { CalculatorHelper } from "src/libraries/CalculatorHelper.sol";
 
 contract CalculatorHelperTest is Test {
-    function testcalculateRefund(
+    function testCalculateRefund(
         uint8 orderFeeRate,
         uint8 operatorFeeRate,
         uint64 outcomeTokens,
