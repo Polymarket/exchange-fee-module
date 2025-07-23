@@ -9,10 +9,35 @@ import { FeeModule } from "src/FeeModule.sol";
 /// @author Polymarket
 contract DeployFeeModule is Script {
     /// @notice Deploys the FeeModule
+    /// @param admin    - The admin
     /// @param exchange - The CTFExchange address
-    function deploy(address exchange) public returns (address module) {
+    function run(address admin, address exchange) public returns (address module) {
         vm.startBroadcast();
-        module = address(new FeeModule(exchange));
+        
+        FeeModule feeModule = new FeeModule(exchange);
+
+        // Add admin auth to the Admin address
+        feeModule.addAdmin(admin);
+        
+        // revoke deployer's auth
+        feeModule.renounceAdmin();
+        
+        module = address(feeModule);
+
         vm.stopBroadcast();
+
+        if(!_verifyStatePostDeployment(admin, exchange, module)){
+            revert("state verification post deployment failed");
+        }
+    }
+
+    function _verifyStatePostDeployment(address admin, address exchange, address feeModule) internal view returns (bool) {
+        FeeModule module = FeeModule(feeModule);
+        
+        if (module.isAdmin(msg.sender)) revert("Deployer admin not renounced");
+        if (!module.isAdmin(admin)) revert("FeeModule admin not set");        
+        if (address(module.exchange()) != exchange) revert("Unexpected exchange set on the FeeModule");
+
+        return true;
     }
 }
