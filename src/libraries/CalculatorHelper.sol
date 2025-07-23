@@ -9,28 +9,28 @@ library CalculatorHelper {
     uint256 internal constant BPS_DIVISOR = 10_000;
 
     /// @notice Calculates the fee refund for an Order
-    /// @notice Used to refund Order makers if a user signs a fee into an Order that is > the expeceted fee
+    /// @notice Used to refund Order makers if a user signs a fee into an Order that is greater than the expected operator fee
     /// @param orderFeeRateBps      - The fee rate signed into the order by the user
-    /// @param operatorFeeRateBps   - The fee rate chosen by the operator
+    /// @param operatorFeeAmount    - The fee amount calculated by the operator.
+    /// @dev This fee cannot exceed the fee implied by the fee rate bps in the order.
     /// @param outcomeTokens        - The number of outcome tokens
     /// @param makerAmount          - The maker amount of the order
     /// @param takerAmount          - The taker amount of the order
     /// @param side                 - The side of the order
     function calculateRefund(
         uint256 orderFeeRateBps,
-        uint256 operatorFeeRateBps,
+        uint256 operatorFeeAmount,
         uint256 outcomeTokens,
         uint256 makerAmount,
         uint256 takerAmount,
         Side side
     ) internal pure returns (uint256) {
-        if (orderFeeRateBps <= operatorFeeRateBps) return 0;
-
         // Calculates the fee charged by the exchange
-        uint256 exchangeFeeAmount = calculateFee(orderFeeRateBps, outcomeTokens, makerAmount, takerAmount, side);
+        uint256 exchangeFeeAmount = calculateExchangeFee(orderFeeRateBps, outcomeTokens, makerAmount, takerAmount, side);
 
-        if (operatorFeeRateBps == 0) return exchangeFeeAmount;
-        uint256 operatorFeeAmount = calculateFee(operatorFeeRateBps, outcomeTokens, makerAmount, takerAmount, side);
+        // Exchange fee must be greater than the operator fee
+        if (exchangeFeeAmount <= operatorFeeAmount) return 0;
+
         return exchangeFeeAmount - operatorFeeAmount;
     }
 
@@ -47,14 +47,15 @@ library CalculatorHelper {
         return makingAmount * takerAmount / makerAmount;
     }
 
-    /// @notice Calculates the fee for an order
+    /// @notice Calculates the fee charged by the CTF Exchange on an order
+    /// @dev This function executes the onchain fee calculation done on the CTF Exchange
     /// @dev Fees are calculated based on amount of outcome tokens and the order's feeRate
     /// @param feeRateBps       - Fee rate, in basis points
     /// @param outcomeTokens    - The number of outcome tokens
     /// @param makerAmount      - The maker amount of the order
     /// @param takerAmount      - The taker amount of the order
     /// @param side             - The side of the order
-    function calculateFee(
+    function calculateExchangeFee(
         uint256 feeRateBps,
         uint256 outcomeTokens,
         uint256 makerAmount,

@@ -112,7 +112,7 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
 
     function getExpectedFee(Order memory order, uint256 making) internal pure returns (uint256) {
         uint256 taking = CalculatorHelper.calculateTakingAmount(making, order.makerAmount, order.takerAmount);
-        return CalculatorHelper.calculateFee(
+        return CalculatorHelper.calculateExchangeFee(
             order.feeRateBps, order.side == Side.BUY ? taking : making, order.makerAmount, order.takerAmount, order.side
         );
     }
