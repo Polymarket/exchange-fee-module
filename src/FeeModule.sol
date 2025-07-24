@@ -109,7 +109,7 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
         // If the refund is non-zero, transfer it to the order maker
         if (refund > 0) {
             _transfer(token, address(this), order.maker, id, refund);
-            emit FeeRefunded(exchange.hashOrder(order), token, order.maker, id, refund, uint8(trader));
+            emit FeeRefunded(exchange.hashOrder(order), order.maker, id, refund, uint8(trader));
         }
     }
 }
