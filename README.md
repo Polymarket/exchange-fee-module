@@ -1,6 +1,6 @@
 # Polymarket CTF Exchange Fee Module
 
-The `FeeModule` contract proxies the `Exchange`'s `matchOrders` function and refunds orders if they are overcharged.
+The `FeeModule` contract proxies the `Exchange`'s `matchOrders` function and refunds orders' fees if they are charged more than the operator's intent.
 
 
 ## Deployments
