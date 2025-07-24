@@ -240,6 +240,49 @@ contract FeeModuleTest is FeeModuleTestHelper {
         assertEq(operatorMakerFeeAmountA + operatorMakerFeeAmountB, balanceOf1155(ctf, address(feeModule), no));
     }
 
+    function testMatchOrdersFuzz(uint64 takerFillAmount, uint16 takerFeeRateBps, uint16 makerFeeRateBps) public {
+        vm.assume(
+            takerFillAmount <= 50_000_000 && takerFeeRateBps > 100 && takerFeeRateBps < getMaxFeeRate()
+                && makerFeeRateBps > 10 && makerFeeRateBps < getMaxFeeRate()
+        );
+
+        Order memory takerOrder =
+            createAndSignOrder(bobPK, yes, 50_000_000, 100_000_000, Side.BUY, uint256(takerFeeRateBps));
+        Order memory makerOrder =
+            createAndSignOrder(carlaPK, yes, 100_000_000, 50_000_000, Side.SELL, uint256(makerFeeRateBps));
+
+        uint256 makerFillAmount = takerFillAmount * 100_000_000 / 50_000_000;
+
+        // Apply a 0.5 haircut to the exchange fee
+        uint256 operatorTakerFeeAmount = getOperatorFee(takerOrder, takerFillAmount, 500_000);
+        uint256[] memory operatorMakerFeeAmounts = new uint256[](1);
+        operatorMakerFeeAmounts[0] = getOperatorFee(makerOrder, makerFillAmount, 500_000);
+
+        Order[] memory makerOrders = new Order[](1);
+        makerOrders[0] = makerOrder;
+
+        uint256[] memory makerFillAmounts = new uint256[](1);
+
+        makerFillAmounts[0] = makerFillAmount;
+
+        uint256 takerRefund = getRefund(takerOrder, takerFillAmount, operatorTakerFeeAmount);
+        if (takerRefund > 0) {
+            vm.expectEmit();
+            emit FeeRefunded(hashOrder(takerOrder), ctf, bob, yes, takerRefund, uint8(Trader.TAKER));
+        }
+
+        uint256 makerRefund = getRefund(makerOrder, makerFillAmount, operatorMakerFeeAmounts[0]);
+        if (makerRefund > 0) {
+            vm.expectEmit();
+            emit FeeRefunded(hashOrder(makerOrder), usdc, carla, 0, makerRefund, uint8(Trader.MAKER));
+        }
+
+        vm.prank(admin);
+        feeModule.matchOrders(
+            takerOrder, makerOrders, takerFillAmount, makerFillAmounts, operatorTakerFeeAmount, operatorMakerFeeAmounts
+        );
+    }
+
     function testWithdrawERC1155() public {
         _transfer(ctf, bob, address(feeModule), yes, 100_000_000);
 

@@ -48,6 +48,8 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
     uint256 public yes;
     uint256 public no;
 
+    uint256 constant base = 1_000_000;
+
     function setUp() public virtual {
         bob = vm.addr(bobPK);
         vm.label(bob, "bob");
@@ -115,6 +117,16 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
         return CalculatorHelper.calculateExchangeFee(
             order.feeRateBps, order.side == Side.BUY ? taking : making, order.makerAmount, order.takerAmount, order.side
         );
+    }
+
+    // calculate an operator fee amount given the exchange fee amout and operator fee haircut
+    function getOperatorFee(Order memory order, uint256 making, uint256 operatorFeeHaircut)
+        internal
+        pure
+        returns (uint256)
+    {
+        uint256 exchangeFeeAmount = getExchangeFee(order, making);
+        return (exchangeFeeAmount * operatorFeeHaircut) / base;
     }
 
     function getRefund(Order memory order, uint256 making, uint256 operatorFeeAmount) internal pure returns (uint256) {
