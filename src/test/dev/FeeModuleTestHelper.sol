@@ -6,12 +6,12 @@ import { ERC1155 } from "lib/solmate/src/tokens/ERC1155.sol";
 import { IERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import { IERC1155 } from "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
 
-import { TestHelper } from "./TestHelper.sol";
 import { Deployer } from "./Deployer.sol";
 import { OrderLib } from "./OrderLib.sol";
+import { TestHelper } from "./TestHelper.sol";
 
-import { IConditionalTokens } from "../interfaces/IConditionalTokens.sol";
 import { IExchangeEE, IExchange } from "../interfaces/IExchange.sol";
+import { IConditionalTokens } from "../interfaces/IConditionalTokens.sol";
 
 import { FeeModule } from "src/FeeModule.sol";
 import { Order, Side, OrderStatus } from "src/libraries/Structs.sol";
