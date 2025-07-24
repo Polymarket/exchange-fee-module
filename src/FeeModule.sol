@@ -91,8 +91,6 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
     /// @param feeAmount    - The fee amount for the order, chosen by the operator
     /// @param trader       - An enum denoting whether the Trader is a Maker or a Taker
     function _refundFee(Order memory order, uint256 fillAmount, uint256 feeAmount, Trader trader) internal {
-        if (feeAmount == 0) return;
-
         // Calculate refund for the order, if any
         uint256 refund = CalculatorHelper.calculateRefund(
             order.feeRateBps,

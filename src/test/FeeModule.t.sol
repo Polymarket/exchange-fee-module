@@ -15,169 +15,258 @@ contract FeeModuleTest is FeeModuleTestHelper {
         assertFalse(feeModule.isAdmin(brian));
     }
 
-    // function testMatchOrders() public {
-    //     // Initialize a match with a buy vs a set of sell maker orders
-    //     // User signed fees
-    //     uint256 takerFeeRateBps = 1000; // 10% Taker fee
-    //     uint256 makerFeeRateBps = 100; // 1% Maker fee
+    function testMatchOrders() public {
+        // Initialize a match with a buy vs a set of sell maker orders
 
-    //     // Operator fees
-    //     uint256 operatorTakerFeeRateBps = 500; // 5% Operator taker fee rate
-    //     uint256 operatorMakerFeeRateBps = 0; // 0% Operator maker fee rate
+        // Taker order 40c buy, 40 USDC for 100 YES with a signed 10% user fee
+        Order memory takerOrder = createAndSignOrder(bobPK, yes, 40_000_000, 100_000_000, Side.BUY, 1000);
 
-    //     // Maker orders are erroneously charged higher fees than the operator inteded and should be refunded
-    //     // The taker order is also charged higher fees than the operator intended and should be refunded
+        // Initialize maker orders with signed user fees
+        // SellA: Selling 60 YES tokens for 24 USDC, 40c YES sell, fully filled, 1% Maker Fee
+        Order memory makerOrderA = createAndSignOrder(carlaPK, yes, 60_000_000, 24_000_000, Side.SELL, 100);
+        // SellB: Selling 100 YES for 40 USDC, 40c YES sell, partialy filled, 1% Maker Fee
+        Order memory makerOrderB = createAndSignOrder(carlaPK, yes, 100_000_000, 40_000_000, Side.SELL, 100);
 
-    //     // Taker order 40c buy with a 10% signed user fee
-    //     Order memory buy = createAndSignOrder(bobPK, yes, 40_000_000, 100_000_000, Side.BUY, takerFeeRateBps);
+        Order[] memory makerOrders = new Order[](2);
+        makerOrders[0] = makerOrderA;
+        makerOrders[1] = makerOrderB;
 
-    //     // Initialize maker orders with signed user fees
-    //     // SellA: Selling 60 YES tokens for 24 USDC, 40c YES sell, fully filled
-    //     Order memory sellA = createAndSignOrder(carlaPK, yes, 60_000_000, 24_000_000, Side.SELL, makerFeeRateBps);
-    //     // SellB: Selling 100 YES for 40 USDC, 40c YES sell, partialy filled
-    //     Order memory sellB = createAndSignOrder(carlaPK, yes, 100_000_000, 40_000_000, Side.SELL, makerFeeRateBps);
+        uint256[] memory fillAmounts = new uint256[](2);
+        fillAmounts[0] = 60_000_000;
+        fillAmounts[1] = 40_000_000;
 
-    //     Order[] memory sells = new Order[](2);
-    //     sells[0] = sellA;
-    //     sells[1] = sellB;
+        // Operator fee amounts
+        // Operator levies a 5% flat fee on the taker order proceeds
+        uint256 operatorTakerFeeAmount = 5_000_000;
 
-    //     uint256[] memory fillAmounts = new uint256[](2);
-    //     fillAmounts[0] = 60_000_000;
-    //     fillAmounts[1] = 40_000_000;
+        // Operator levies a 0.5% flat fee on the maker orders' proceeds
+        uint256 operatorMakerFeeAmountA = 120_000;
+        uint256 operatorMakerFeeAmountB = 80_000;
 
-    //     uint256 takerFee = getExpectedFee(buy, 40_000_000);
+        uint256[] memory operatorMakerFeeAmounts = new uint256[](2);
+        operatorMakerFeeAmounts[0] = operatorMakerFeeAmountA;
+        operatorMakerFeeAmounts[1] = operatorMakerFeeAmountB;
 
-    //     // Orders get matched correctly
-    //     vm.expectEmit();
-    //     emit OrderFilled(
-    //         hashOrder(sellA), carla, bob, yes, 0, 60_000_000, 24_000_000, getExpectedFee(sellA, 60_000_000)
-    //     );
+        // The difference between the Exchange fees and the Operator fees are refunded
+        vm.expectEmit();
+        emit FeeRefunded(
+            hashOrder(takerOrder),
+            ctf,
+            bob,
+            yes,
+            getRefund(takerOrder, 40_000_000, operatorTakerFeeAmount),
+            uint8(Trader.TAKER)
+        );
 
-    //     vm.expectEmit();
-    //     emit OrderFilled(
-    //         hashOrder(sellB), carla, bob, yes, 0, 40_000_000, 16_000_000, getExpectedFee(sellB, 40_000_000)
-    //     );
+        // Maker fees are refunded
+        vm.expectEmit();
+        emit FeeRefunded(
+            hashOrder(makerOrderA),
+            usdc,
+            carla,
+            0,
+            getRefund(makerOrderA, 60_000_000, operatorMakerFeeAmountA),
+            uint8(Trader.MAKER)
+        );
 
-    //     vm.expectEmit();
-    //     emit OrderFilled(hashOrder(buy), bob, exchange, 0, yes, 40_000_000, 100_000_000, takerFee);
+        vm.expectEmit();
+        emit FeeRefunded(
+            hashOrder(makerOrderB),
+            usdc,
+            carla,
+            0,
+            getRefund(makerOrderB, 40_000_000, operatorMakerFeeAmountB),
+            uint8(Trader.MAKER)
+        );
 
-    //     vm.expectEmit();
-    //     emit OrdersMatched(hashOrder(buy), bob, 0, yes, 40_000_000, 100_000_000);
+        vm.prank(admin);
+        feeModule.matchOrders(
+            takerOrder, makerOrders, 40_000_000, fillAmounts, operatorTakerFeeAmount, operatorMakerFeeAmounts
+        );
 
-    //     // Taker fees are refunded
-    //     vm.expectEmit();
-    //     emit FeeRefunded(uint8(Trader.TAKER), ctf, bob, yes, getRefund(buy, 40_000_000, operatorTakerFeeRateBps));
+        // Assert post execution balance changes
+        // Taker fee collected on the taker order on the fee module, denominated in YES token
+        assertEq(operatorTakerFeeAmount, balanceOf1155(ctf, address(feeModule), yes));
 
-    //     // Maker fees are refunded
-    //     vm.expectEmit();
-    //     emit FeeRefunded(uint8(Trader.MAKER), usdc, carla, 0, getRefund(sellA, 60_000_000, operatorMakerFeeRateBps));
+        // Total maker fees collected on the maker orders, denominated in USDC
+        assertEq((operatorMakerFeeAmountA + operatorMakerFeeAmountB), balanceOf(usdc, address(feeModule)));
+    }
 
-    //     vm.expectEmit();
-    //     emit FeeRefunded(uint8(Trader.MAKER), usdc, carla, 0, getRefund(sellB, 40_000_000, operatorMakerFeeRateBps));
+    function testMatchOrdersMatchTypeMerge() public {
+        // Initialize a match with a taker sell vs a set of sell maker orders
 
-    //     vm.prank(admin);
-    //     feeModule.matchOrders(buy, sells, 40_000_000, fillAmounts, operatorTakerFeeRateBps, operatorMakerFeeRateBps);
+        // Taker order 40c sell, 100 YES for 40 USDC with a signed 10% user fee
+        Order memory takerOrder = createAndSignOrder(bobPK, yes, 100_000_000, 40_000_000, Side.SELL, 1000);
 
-    //     // Assert balance changes
-    //     // Taker fee collected on the taker order on the fee module, denominated in YES token
-    //     assertEq(
-    //         takerFee - getRefund(buy, 40_000_000, operatorTakerFeeRateBps), balanceOf1155(ctf, address(feeModule), yes)
-    //     );
-    // }
+        // Initialize maker orders with signed user fees
+        // SellA: Selling 60 NO tokens for 24 USDC, fully filled, 1% Maker Fee
+        Order memory makerOrderA = createAndSignOrder(carlaPK, no, 60_000_000, 24_000_000, Side.SELL, 100);
+        // SellB: Selling 40 NO for 16 USDC, partialy filled, 1.5% Maker Fee
+        Order memory makerOrderB = createAndSignOrder(carlaPK, no, 40_000_000, 16_000_000, Side.SELL, 150);
 
-    // function testMatchOrdersMatchTypeMerge() public {
-    //     // User signed fees
-    //     uint256 makerFee = 100;
-    //     uint256 takerFee = 1000;
+        Order[] memory makerOrders = new Order[](2);
+        makerOrders[0] = makerOrderA;
+        makerOrders[1] = makerOrderB;
 
-    //     // Operator fees
-    //     uint256 operatorMakerFeeRateBps = 0;
-    //     uint256 operatorTakerFeeRateBps = 500;
+        uint256[] memory fillAmounts = new uint256[](2);
+        fillAmounts[0] = 60_000_000;
+        fillAmounts[1] = 40_000_000;
 
-    //     // YES sell maker order
-    //     Order memory yesSell = createAndSignOrder(carlaPK, yes, 100_000_000, 40_000_000, Side.SELL, makerFee);
-    //     Order[] memory makerOrders = new Order[](1);
-    //     makerOrders[0] = yesSell;
+        // Operator fee amounts
+        // Operator levies a 5% flat fee on the taker order proceeds
+        uint256 operatorTakerFeeAmount = 2_000_000; // 2 USDC
 
-    //     uint256[] memory fillAmounts = new uint256[](1);
-    //     fillAmounts[0] = 60_000_000;
+        // Operator levies a 0.5% flat fee on the maker orders' proceeds
+        uint256 operatorMakerFeeAmountA = 120_000; // 0.12 USDC
+        uint256 operatorMakerFeeAmountB = 80_000; // 0.8 USDC
 
-    //     // NO sell taker order
-    //     Order memory noSell = createAndSignOrder(bobPK, no, 60_000_000, 24_000_000, Side.SELL, takerFee);
+        uint256[] memory operatorMakerFeeAmounts = new uint256[](2);
+        operatorMakerFeeAmounts[0] = operatorMakerFeeAmountA;
+        operatorMakerFeeAmounts[1] = operatorMakerFeeAmountB;
 
-    //     // fees collected in USDC
-    //     vm.expectEmit();
-    //     emit FeeRefunded(uint8(Trader.TAKER), usdc, bob, 0, 1_200_000);
+        vm.expectEmit();
+        emit FeeRefunded(
+            hashOrder(takerOrder),
+            usdc,
+            bob,
+            0,
+            getRefund(takerOrder, 100_000_000, operatorTakerFeeAmount),
+            uint8(Trader.TAKER)
+        );
 
-    //     vm.expectEmit();
-    //     emit FeeRefunded(uint8(Trader.MAKER), usdc, carla, 0, 240_000);
+        vm.expectEmit();
+        emit FeeRefunded(
+            hashOrder(makerOrderA),
+            usdc,
+            carla,
+            0,
+            getRefund(makerOrderA, 60_000_000, operatorMakerFeeAmountA),
+            uint8(Trader.MAKER)
+        );
 
-    //     vm.prank(admin);
-    //     feeModule.matchOrders(
-    //         noSell, makerOrders, 60_000_000, fillAmounts, operatorTakerFeeRateBps, operatorMakerFeeRateBps
-    //     );
-    // }
+        vm.expectEmit();
+        emit FeeRefunded(
+            hashOrder(makerOrderB),
+            usdc,
+            carla,
+            0,
+            getRefund(makerOrderB, 40_000_000, operatorMakerFeeAmountB),
+            uint8(Trader.MAKER)
+        );
 
-    // function testMatchOrdersMatchTypeMint() public {
-    //     // User signed fees
-    //     uint256 makerFee = 100;
-    //     uint256 takerFee = 1000;
+        vm.prank(admin);
+        feeModule.matchOrders(
+            takerOrder, makerOrders, 100_000_000, fillAmounts, operatorTakerFeeAmount, operatorMakerFeeAmounts
+        );
 
-    //     // Operator fees
-    //     uint256 operatorMakerFeeRateBps = 0;
-    //     uint256 operatorTakerFeeRateBps = 500;
+        // Assert post execution balance changes
+        // Total Fees collected in USDC
+        assertEq(
+            operatorTakerFeeAmount + operatorMakerFeeAmountA + operatorMakerFeeAmountB,
+            balanceOf(usdc, address(feeModule))
+        );
+    }
 
-    //     // YES BUY maker order
-    //     Order memory yesBuy = createAndSignOrder(carlaPK, yes, 40_000_000, 100_000_000, Side.BUY, makerFee);
-    //     Order[] memory makerOrders = new Order[](1);
-    //     makerOrders[0] = yesBuy;
+    function testMatchOrdersMatchTypeMint() public {
+        // Initialize a match with a taker buy vs a set of buy maker orders
 
-    //     uint256[] memory fillAmounts = new uint256[](1);
-    //     fillAmounts[0] = 40_000_000;
+        // Taker order 40c buy, 60 USDC for 100 YES with a signed 10% user fee
+        Order memory takerOrder = createAndSignOrder(bobPK, yes, 60_000_000, 100_000_000, Side.BUY, 1000);
 
-    //     // NO BUY taker order
-    //     Order memory noBuy = createAndSignOrder(bobPK, no, 60_000_000, 100_000_000, Side.BUY, takerFee);
+        // Initialize maker orders with signed user fees
+        // BuyA: Buying 50 NO tokens for 25 USDC, 1% Maker Fee
+        Order memory makerOrderA = createAndSignOrder(carlaPK, no, 25_000_000, 50_000_000, Side.BUY, 100);
+        // BuyB: Buying 50 NO for 20 USDC, 1% Maker Fee
+        Order memory makerOrderB = createAndSignOrder(carlaPK, no, 20_000_000, 50_000_000, Side.BUY, 100);
 
-    //     vm.expectEmit();
-    //     // fees collected in tokens
-    //     emit FeeRefunded(uint8(Trader.TAKER), ctf, bob, no, 3_333_333);
+        Order[] memory makerOrders = new Order[](2);
+        makerOrders[0] = makerOrderA;
+        makerOrders[1] = makerOrderB;
 
-    //     vm.expectEmit();
-    //     emit FeeRefunded(uint8(Trader.MAKER), ctf, carla, yes, 1_000_000);
+        uint256[] memory fillAmounts = new uint256[](2);
+        fillAmounts[0] = 25_000_000;
+        fillAmounts[1] = 20_000_000;
 
-    //     vm.prank(admin);
-    //     feeModule.matchOrders(
-    //         noBuy, makerOrders, 60_000_000, fillAmounts, operatorTakerFeeRateBps, operatorMakerFeeRateBps
-    //     );
-    // }
+        // Operator fee amounts
+        // Operator levies a 5% flat fee on the taker order proceeds
+        uint256 operatorTakerFeeAmount = 5_000_000; // 5 YES
 
-    // function testWithdrawERC1155() public {
-    //     _transfer(ctf, bob, address(feeModule), yes, 100_000_000);
+        // Operator levies a 0.5% flat fee on the maker orders' proceeds
+        uint256 operatorMakerFeeAmountA = 125_000; // 0.125 YES
+        uint256 operatorMakerFeeAmountB = 100_000; // 0.1 YES
 
-    //     uint256 amount = balanceOf1155(ctf, address(feeModule), yes);
-    //     vm.expectEmit();
-    //     emit FeeWithdrawn(ctf, admin, yes, amount);
+        uint256[] memory operatorMakerFeeAmounts = new uint256[](2);
+        operatorMakerFeeAmounts[0] = operatorMakerFeeAmountA;
+        operatorMakerFeeAmounts[1] = operatorMakerFeeAmountB;
 
-    //     // Withdraw tokens
-    //     vm.prank(admin);
-    //     feeModule.withdrawFees(admin, yes, amount);
+        vm.expectEmit();
+        emit FeeRefunded(
+            hashOrder(takerOrder),
+            ctf,
+            bob,
+            yes,
+            getRefund(takerOrder, 60_000_000, operatorTakerFeeAmount),
+            uint8(Trader.TAKER)
+        );
 
-    //     assertEq(balanceOf1155(ctf, admin, yes), amount);
-    //     assertEq(balanceOf1155(ctf, address(feeModule), yes), 0);
-    // }
+        vm.expectEmit();
+        emit FeeRefunded(
+            hashOrder(makerOrderA),
+            ctf,
+            carla,
+            no,
+            getRefund(makerOrderA, 25_000_000, operatorMakerFeeAmountA),
+            uint8(Trader.MAKER)
+        );
 
-    // function testWithdrawERC20() public {
-    //     _transfer(usdc, bob, address(feeModule), 0, 100_000_000);
+        vm.expectEmit();
+        emit FeeRefunded(
+            hashOrder(makerOrderB),
+            ctf,
+            carla,
+            no,
+            getRefund(makerOrderB, 20_000_000, operatorMakerFeeAmountB),
+            uint8(Trader.MAKER)
+        );
 
-    //     uint256 amount = balanceOf(usdc, address(feeModule));
-    //     vm.expectEmit();
-    //     emit FeeWithdrawn(usdc, admin, 0, amount);
+        vm.prank(admin);
+        feeModule.matchOrders(
+            takerOrder, makerOrders, 60_000_000, fillAmounts, operatorTakerFeeAmount, operatorMakerFeeAmounts
+        );
 
-    //     // Withdraw tokens
-    //     vm.prank(admin);
-    //     feeModule.withdrawFees(admin, 0, amount);
+        // Assert post execution balance changes
+        // Total Fees collected in CTF tokens
+        assertEq(operatorTakerFeeAmount, balanceOf1155(ctf, address(feeModule), yes));
+        assertEq(operatorMakerFeeAmountA + operatorMakerFeeAmountB, balanceOf1155(ctf, address(feeModule), no));
+    }
 
-    //     assertEq(balanceOf(usdc, admin), amount);
-    //     assertEq(balanceOf(usdc, address(feeModule)), 0);
-    // }
+    function testWithdrawERC1155() public {
+        _transfer(ctf, bob, address(feeModule), yes, 100_000_000);
+
+        uint256 amount = balanceOf1155(ctf, address(feeModule), yes);
+        vm.expectEmit();
+        emit FeeWithdrawn(ctf, admin, yes, amount);
+
+        // Withdraw tokens
+        vm.prank(admin);
+        feeModule.withdrawFees(admin, yes, amount);
+
+        assertEq(balanceOf1155(ctf, admin, yes), amount);
+        assertEq(balanceOf1155(ctf, address(feeModule), yes), 0);
+    }
+
+    function testWithdrawERC20() public {
+        _transfer(usdc, bob, address(feeModule), 0, 100_000_000);
+
+        uint256 amount = balanceOf(usdc, address(feeModule));
+        vm.expectEmit();
+        emit FeeWithdrawn(usdc, admin, 0, amount);
+
+        // Withdraw tokens
+        vm.prank(admin);
+        feeModule.withdrawFees(admin, 0, amount);
+
+        assertEq(balanceOf(usdc, admin), amount);
+        assertEq(balanceOf(usdc, address(feeModule)), 0);
+    }
 }
