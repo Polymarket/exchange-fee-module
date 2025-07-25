@@ -9,7 +9,7 @@ import { Transfers } from "./mixins/Transfers.sol";
 import { IExchange } from "./interfaces/IExchange.sol";
 import { IFeeModule } from "./interfaces/IFeeModule.sol";
 
-import { Order, Side, Trader } from "./libraries/Structs.sol";
+import { Order, Side } from "./libraries/Structs.sol";
 import { CalculatorHelper } from "./libraries/CalculatorHelper.sol";
 
 /// @title Polymarket CTF Fee Module
@@ -70,7 +70,7 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
     /// @param fillAmount   - The fill amount for the the taker order
     /// @param feeAmount    - The fee amount for the taker order
     function _refundTakerFees(Order memory order, uint256 fillAmount, uint256 feeAmount) internal {
-        _refundFee(order, fillAmount, feeAmount, Trader.TAKER);
+        _refundFee(order, fillAmount, feeAmount);
     }
 
     /// @notice Refund fees for a set of maker orders
@@ -81,7 +81,7 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
         internal
     {
         for (uint256 i = 0; i < orders.length; ++i) {
-            _refundFee(orders[i], fillAmounts[i], feeAmounts[i], Trader.MAKER);
+            _refundFee(orders[i], fillAmounts[i], feeAmounts[i]);
         }
     }
 
@@ -89,8 +89,7 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
     /// @param order        - The order
     /// @param fillAmount   - The fill amount for the order
     /// @param feeAmount    - The fee amount for the order, chosen by the operator
-    /// @param trader       - An enum denoting whether the Trader is a Maker or a Taker
-    function _refundFee(Order memory order, uint256 fillAmount, uint256 feeAmount, Trader trader) internal {
+    function _refundFee(Order memory order, uint256 fillAmount, uint256 feeAmount) internal {
         // Calculate refund for the order, if any
         uint256 refund = CalculatorHelper.calculateRefund(
             order.feeRateBps,
@@ -109,7 +108,7 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
         // If the refund is non-zero, transfer it to the order maker
         if (refund > 0) {
             _transfer(token, address(this), order.maker, id, refund);
-            emit FeeRefunded(exchange.hashOrder(order), order.maker, id, refund, uint8(trader));
+            emit FeeRefunded(exchange.hashOrder(order), order.maker, id, refund);
         }
     }
 }

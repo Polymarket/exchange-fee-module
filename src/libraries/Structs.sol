@@ -8,13 +8,6 @@ enum Side {
     SELL
 }
 
-enum Trader {
-    // 0: taker
-    TAKER,
-    // 1: maker
-    MAKER
-}
-
 enum SignatureType {
     // 0: ECDSA EIP712 signatures signed by EOAs
     EOA,
