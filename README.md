@@ -7,7 +7,7 @@ The `FeeModule` contract proxies the `Exchange`'s `matchOrders` function and ref
 | Network          | Address                                                                           |
 | ---------------- | --------------------------------------------------------------------------------- |
 | Polygon          |[0x56C79347e95530c01A2FC76E732f9566dA16E113](https://polygonscan.com/address/0x56C79347e95530c01A2FC76E732f9566dA16E113)|
-| Mumbai           |[0x56C79347e95530c01A2FC76E732f9566dA16E113](https://mumbai.polygonscan.com/address/0x56C79347e95530c01A2FC76E732f9566dA16E113)|
+| Amoy           |[0x9A9faEf45C671cc57B3e117c5B3053075416490f](https://amoy.polygonscan.com/address/0x9A9faEf45C671cc57B3e117c5B3053075416490f)|
 
 ## Functions
 
