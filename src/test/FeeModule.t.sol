@@ -49,14 +49,32 @@ contract FeeModuleTest is FeeModuleTestHelper {
 
         // The difference between the Exchange fees and the Operator fees are refunded
         vm.expectEmit();
-        emit FeeRefunded(hashOrder(takerOrder), bob, yes, getRefund(takerOrder, 40_000_000, operatorTakerFeeAmount));
+        emit FeeRefunded(
+            hashOrder(takerOrder),
+            bob,
+            yes,
+            getRefund(takerOrder, 40_000_000, operatorTakerFeeAmount),
+            operatorTakerFeeAmount
+        );
 
         // Maker fees are refunded
         vm.expectEmit();
-        emit FeeRefunded(hashOrder(makerOrderA), carla, 0, getRefund(makerOrderA, 60_000_000, operatorMakerFeeAmountA));
+        emit FeeRefunded(
+            hashOrder(makerOrderA),
+            carla,
+            0,
+            getRefund(makerOrderA, 60_000_000, operatorMakerFeeAmountA),
+            operatorMakerFeeAmountA
+        );
 
         vm.expectEmit();
-        emit FeeRefunded(hashOrder(makerOrderB), carla, 0, getRefund(makerOrderB, 40_000_000, operatorMakerFeeAmountB));
+        emit FeeRefunded(
+            hashOrder(makerOrderB),
+            carla,
+            0,
+            getRefund(makerOrderB, 40_000_000, operatorMakerFeeAmountB),
+            operatorMakerFeeAmountB
+        );
 
         vm.prank(admin);
         feeModule.matchOrders(
@@ -104,13 +122,31 @@ contract FeeModuleTest is FeeModuleTestHelper {
         operatorMakerFeeAmounts[1] = operatorMakerFeeAmountB;
 
         vm.expectEmit();
-        emit FeeRefunded(hashOrder(takerOrder), bob, 0, getRefund(takerOrder, 100_000_000, operatorTakerFeeAmount));
+        emit FeeRefunded(
+            hashOrder(takerOrder),
+            bob,
+            0,
+            getRefund(takerOrder, 100_000_000, operatorTakerFeeAmount),
+            operatorTakerFeeAmount
+        );
 
         vm.expectEmit();
-        emit FeeRefunded(hashOrder(makerOrderA), carla, 0, getRefund(makerOrderA, 60_000_000, operatorMakerFeeAmountA));
+        emit FeeRefunded(
+            hashOrder(makerOrderA),
+            carla,
+            0,
+            getRefund(makerOrderA, 60_000_000, operatorMakerFeeAmountA),
+            operatorMakerFeeAmountA
+        );
 
         vm.expectEmit();
-        emit FeeRefunded(hashOrder(makerOrderB), carla, 0, getRefund(makerOrderB, 40_000_000, operatorMakerFeeAmountB));
+        emit FeeRefunded(
+            hashOrder(makerOrderB),
+            carla,
+            0,
+            getRefund(makerOrderB, 40_000_000, operatorMakerFeeAmountB),
+            operatorMakerFeeAmountB
+        );
 
         vm.prank(admin);
         feeModule.matchOrders(
@@ -158,13 +194,31 @@ contract FeeModuleTest is FeeModuleTestHelper {
         operatorMakerFeeAmounts[1] = operatorMakerFeeAmountB;
 
         vm.expectEmit();
-        emit FeeRefunded(hashOrder(takerOrder), bob, yes, getRefund(takerOrder, 60_000_000, operatorTakerFeeAmount));
+        emit FeeRefunded(
+            hashOrder(takerOrder),
+            bob,
+            yes,
+            getRefund(takerOrder, 60_000_000, operatorTakerFeeAmount),
+            operatorTakerFeeAmount
+        );
 
         vm.expectEmit();
-        emit FeeRefunded(hashOrder(makerOrderA), carla, no, getRefund(makerOrderA, 25_000_000, operatorMakerFeeAmountA));
+        emit FeeRefunded(
+            hashOrder(makerOrderA),
+            carla,
+            no,
+            getRefund(makerOrderA, 25_000_000, operatorMakerFeeAmountA),
+            operatorMakerFeeAmountA
+        );
 
         vm.expectEmit();
-        emit FeeRefunded(hashOrder(makerOrderB), carla, no, getRefund(makerOrderB, 20_000_000, operatorMakerFeeAmountB));
+        emit FeeRefunded(
+            hashOrder(makerOrderB),
+            carla,
+            no,
+            getRefund(makerOrderB, 20_000_000, operatorMakerFeeAmountB),
+            operatorMakerFeeAmountB
+        );
 
         vm.prank(admin);
         feeModule.matchOrders(
@@ -205,13 +259,13 @@ contract FeeModuleTest is FeeModuleTestHelper {
         uint256 takerRefund = getRefund(takerOrder, takerFillAmount, operatorTakerFeeAmount);
         if (takerRefund > 0) {
             vm.expectEmit();
-            emit FeeRefunded(hashOrder(takerOrder), bob, yes, takerRefund);
+            emit FeeRefunded(hashOrder(takerOrder), bob, yes, takerRefund, operatorTakerFeeAmount);
         }
 
         uint256 makerRefund = getRefund(makerOrder, makerFillAmount, operatorMakerFeeAmounts[0]);
         if (makerRefund > 0) {
             vm.expectEmit();
-            emit FeeRefunded(hashOrder(makerOrder), carla, 0, makerRefund);
+            emit FeeRefunded(hashOrder(makerOrder), carla, 0, makerRefund, operatorMakerFeeAmounts[0]);
         }
 
         vm.prank(admin);

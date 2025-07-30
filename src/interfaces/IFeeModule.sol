@@ -8,7 +8,7 @@ interface IFeeModuleEE {
     event FeeWithdrawn(address token, address to, uint256 id, uint256 amount);
 
     /// @notice Emitted when fees are refunded to the order maker
-    event FeeRefunded(bytes32 indexed orderHash, address indexed to, uint256 id, uint256 amount);
+    event FeeRefunded(bytes32 indexed orderHash, address indexed to, uint256 id, uint256 refund, uint256 indexed feeCharged);
 }
 
 interface IFeeModule is IFeeModuleEE {
