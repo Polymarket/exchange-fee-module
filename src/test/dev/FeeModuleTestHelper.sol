@@ -129,6 +129,16 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
         return (exchangeFeeAmount * operatorFeeHaircut) / base;
     }
 
+    function getRefundWithSurplus(Order memory order, uint256 making, uint256 taking, uint256 operatorFeeAmount)
+        internal
+        pure
+        returns (uint256)
+    {
+        return CalculatorHelper.calculateRefund(
+            order.feeRateBps, operatorFeeAmount, order.side == Side.BUY ? taking : making, making, taking, order.side
+        );
+    }
+
     function getRefund(Order memory order, uint256 making, uint256 operatorFeeAmount) internal pure returns (uint256) {
         uint256 taking = CalculatorHelper.calculateTakingAmount(making, order.makerAmount, order.takerAmount);
         return CalculatorHelper.calculateRefund(

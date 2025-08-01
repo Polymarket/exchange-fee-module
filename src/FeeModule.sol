@@ -32,16 +32,18 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
     }
 
     /// @notice Matches a taker order against a list of maker orders, refunding maker order fees if necessary
-    /// @param takerOrder       - The active order to be matched
-    /// @param makerOrders      - The array of maker orders to be matched against the active order
-    /// @param takerFillAmount  - The amount to fill on the taker order, always in terms of the maker amount
-    /// @param makerFillAmounts - The array of amounts to fill on the maker orders, always in terms of the maker amount
-    /// @param takerFeeAmount   - The fee to be charged to the taker
-    /// @param makerFeeAmounts  - The fee to be charged to the maker orders
+    /// @param takerOrder           - The active order to be matched
+    /// @param makerOrders          - The array of maker orders to be matched against the active order
+    /// @param takerFillAmount      - The amount to fill on the taker order, always in terms of the maker amount
+    /// @param takerReceiveAmount   - The amount to that will be received by the taker order, always in terms of the taker amount
+    /// @param makerFillAmounts     - The array of amounts to fill on the maker orders, always in terms of the maker amount
+    /// @param takerFeeAmount       - The fee to be charged to the taker
+    /// @param makerFeeAmounts      - The fee to be charged to the maker orders
     function matchOrders(
         Order memory takerOrder,
         Order[] memory makerOrders,
         uint256 takerFillAmount,
+        uint256 takerReceiveAmount,
         uint256[] memory makerFillAmounts,
         uint256 takerFeeAmount,
         uint256[] memory makerFeeAmounts
@@ -50,7 +52,7 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
         exchange.matchOrders(takerOrder, makerOrders, takerFillAmount, makerFillAmounts);
 
         // Refund taker fees
-        _refundTakerFees(takerOrder, takerFillAmount, takerFeeAmount);
+        _refundTakerFees(takerOrder, takerFillAmount, takerReceiveAmount, takerFeeAmount);
 
         // Refund maker fees
         _refundMakerFees(makerOrders, makerFillAmounts, makerFeeAmounts);
@@ -66,11 +68,17 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
     }
 
     /// @notice Refund fees for the taker order
-    /// @param order        - The taker order
-    /// @param fillAmount   - The fill amount for the the taker order
-    /// @param feeAmount    - The fee amount for the taker order
-    function _refundTakerFees(Order memory order, uint256 fillAmount, uint256 feeAmount) internal {
-        _refundFee(order, fillAmount, feeAmount);
+    /// @param order            - The taker order
+    /// @param fillAmount       - The fill amount for the the taker order
+    /// @param receiveAmount    - The fill amount for the the taker order
+    /// @param feeAmount        - The fee amount for the taker order
+    function _refundTakerFees(Order memory order, uint256 fillAmount, uint256 receiveAmount, uint256 feeAmount)
+        internal
+    {
+        uint256 refund = _calculateTakerRefund(order, fillAmount, receiveAmount, feeAmount);
+        _refundFee(
+            exchange.hashOrder(order), order.side == Side.BUY ? order.tokenId : 0, order.maker, refund, feeAmount
+        );
     }
 
     /// @notice Refund fees for a set of maker orders
@@ -81,34 +89,71 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
         internal
     {
         for (uint256 i = 0; i < orders.length; ++i) {
-            _refundFee(orders[i], fillAmounts[i], feeAmounts[i]);
+            Order memory order = orders[i];
+            _refundFee(
+                exchange.hashOrder(order),
+                order.side == Side.BUY ? order.tokenId : 0,
+                order.maker,
+                _calculateMakerRefund(order, fillAmounts[i], feeAmounts[i]),
+                feeAmounts[i]
+            );
         }
     }
 
-    /// @notice Refund the fee for an order, if necessary
+    /// @notice Calculates the refund for a taker order, if any
+    /// @dev Price and therefore fees for the taker order is calculated using the match price
+    /// @param order            - The order
+    /// @param fillAmount       - The fill amount for the order
+    /// @param receiveAmount    - The receive amount for the order
+    /// @param feeAmount        - The fee amount for the order, chosen by the operator
+    function _calculateTakerRefund(Order memory order, uint256 fillAmount, uint256 receiveAmount, uint256 feeAmount)
+        internal
+        pure
+        returns (uint256)
+    {
+        return CalculatorHelper.calculateRefund(
+            order.feeRateBps,
+            feeAmount,
+            order.side == Side.BUY ? receiveAmount : fillAmount,
+            fillAmount,
+            receiveAmount,
+            order.side
+        );
+    }
+
+    /// @notice Calculates the refund for a maker order
     /// @param order        - The order
     /// @param fillAmount   - The fill amount for the order
     /// @param feeAmount    - The fee amount for the order, chosen by the operator
-    function _refundFee(Order memory order, uint256 fillAmount, uint256 feeAmount) internal {
-        // Calculate refund for the order, if any
-        uint256 refund = CalculatorHelper.calculateRefund(
+    function _calculateMakerRefund(Order memory order, uint256 fillAmount, uint256 feeAmount)
+        internal
+        pure
+        returns (uint256)
+    {
+        // Calculate refund for the maker order, if any
+        uint256 takingAmount = CalculatorHelper.calculateTakingAmount(fillAmount, order.makerAmount, order.takerAmount);
+        return CalculatorHelper.calculateRefund(
             order.feeRateBps,
             feeAmount,
-            order.side == Side.BUY
-                ? CalculatorHelper.calculateTakingAmount(fillAmount, order.makerAmount, order.takerAmount)
-                : fillAmount,
+            order.side == Side.BUY ? takingAmount : fillAmount,
             order.makerAmount,
             order.takerAmount,
             order.side
         );
+    }
 
-        uint256 id = order.side == Side.BUY ? order.tokenId : 0;
-        address token = order.side == Side.BUY ? ctf : collateral;
-
+    /// @notice Refund the fee for an order, if necessary
+    /// @param orderHash    - The hash of the order
+    /// @param id           - The token id of the asset being transferred. 0 if it is the collateral ERC20 asset.
+    /// @param to           - The destination address for the refund
+    /// @param refund       - The refund
+    /// @param feeAmount    - The fee amount being charged
+    function _refundFee(bytes32 orderHash, uint256 id, address to, uint256 refund, uint256 feeAmount) internal {
         // If the refund is non-zero, transfer it to the order maker
         if (refund > 0) {
-            _transfer(token, address(this), order.maker, id, refund);
-            emit FeeRefunded(exchange.hashOrder(order), order.maker, id, refund, feeAmount);
+            address token = id == 0 ? collateral : ctf;
+            _transfer(token, address(this), to, id, refund);
+            emit FeeRefunded(orderHash, to, id, refund, feeAmount);
         }
     }
 }

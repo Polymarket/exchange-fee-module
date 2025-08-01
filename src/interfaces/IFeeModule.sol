@@ -18,6 +18,7 @@ interface IFeeModule is IFeeModuleEE {
         Order memory takerOrder,
         Order[] memory makerOrders,
         uint256 takerFillAmount,
+        uint256 takerReceiveAmount,
         uint256[] memory makerFillAmounts,
         uint256 takerFeeAmount,
         uint256[] memory makerFeeAmount

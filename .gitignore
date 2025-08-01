@@ -16,3 +16,6 @@ env/
 
 # vscode
 .vscode/
+
+# log files
+*.log
