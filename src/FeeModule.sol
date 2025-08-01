@@ -101,7 +101,7 @@ contract FeeModule is IFeeModule, Auth, Transfers, ERC1155TokenReceiver {
     }
 
     /// @notice Calculates the refund for a taker order, if any
-    /// @dev Price and therefore fees for the taker order is calculated using the match price
+    /// @dev The refund for the taker order is calculated using actual match price
     /// @param order            - The order
     /// @param fillAmount       - The fill amount for the order
     /// @param receiveAmount    - The receive amount for the order
