@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity <0.9.0;
 
-import { ERC1155 } from "solmate/tokens/ERC1155.sol";
-import { SafeTransferLib, ERC20 } from "solmate/utils/SafeTransferLib.sol";
+import { ERC1155 } from "lib/solmate/src/tokens/ERC1155.sol";
+import { SafeTransferLib, ERC20 } from "lib/solmate/src/utils/SafeTransferLib.sol";
 
 /// @title TransferHelper
 /// @notice Helper method to transfer tokens

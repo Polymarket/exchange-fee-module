@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity 0.8.30;
 
 import { Order } from "../libraries/Structs.sol";
 
@@ -14,4 +14,6 @@ interface IExchange {
         uint256 takerFillAmount,
         uint256[] memory makerFillAmounts
     ) external;
+
+    function hashOrder(Order memory order) external view returns (bytes32);
 }

@@ -13,3 +13,9 @@ broadcast/
 
 # Python virtual environment
 env/
+
+# vscode
+.vscode/
+
+# log files
+*.log

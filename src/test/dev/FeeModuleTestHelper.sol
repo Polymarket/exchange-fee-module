@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity 0.8.30;
 
-import { ERC20 } from "solmate/tokens/ERC20.sol";
-import { ERC1155 } from "solmate/tokens/ERC1155.sol";
-import { IERC20 } from "openzeppelin-contracts/token/ERC20/IERC20.sol";
-import { IERC1155 } from "openzeppelin-contracts/token/ERC1155/IERC1155.sol";
+import { ERC20 } from "lib/solmate/src/tokens/ERC20.sol";
+import { ERC1155 } from "lib/solmate/src/tokens/ERC1155.sol";
+import { IERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { IERC1155 } from "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
 
-import { TestHelper } from "./TestHelper.sol";
 import { Deployer } from "./Deployer.sol";
 import { OrderLib } from "./OrderLib.sol";
+import { TestHelper } from "./TestHelper.sol";
 
-import { IConditionalTokens } from "../interfaces/IConditionalTokens.sol";
 import { IExchangeEE, IExchange } from "../interfaces/IExchange.sol";
+import { IConditionalTokens } from "../interfaces/IConditionalTokens.sol";
 
 import { FeeModule } from "src/FeeModule.sol";
 import { Order, Side, OrderStatus } from "src/libraries/Structs.sol";
@@ -47,6 +47,8 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
     bytes32 public conditionId;
     uint256 public yes;
     uint256 public no;
+
+    uint256 constant base = 1_000_000;
 
     function setUp() public virtual {
         bob = vm.addr(bobPK);
@@ -110,18 +112,38 @@ contract FeeModuleTestHelper is TestHelper, IAuthEE, IExchangeEE, IFeeModuleEE {
         order = OrderLib._signOrder(pk, IExchange(exchange).hashOrder(order), order);
     }
 
-    function getExpectedFee(Order memory order, uint256 making) internal pure returns (uint256) {
+    function getExchangeFee(Order memory order, uint256 making) internal pure returns (uint256) {
         uint256 taking = CalculatorHelper.calculateTakingAmount(making, order.makerAmount, order.takerAmount);
-        return CalculatorHelper.calculateFee(
+        return CalculatorHelper.calculateExchangeFee(
             order.feeRateBps, order.side == Side.BUY ? taking : making, order.makerAmount, order.takerAmount, order.side
         );
     }
 
-    function getRefund(Order memory order, uint256 making, uint256 operatorFeeRateBps) internal pure returns (uint256) {
+    // calculate an operator fee amount given the exchange fee amout and operator fee haircut
+    function getOperatorFee(Order memory order, uint256 making, uint256 operatorFeeHaircut)
+        internal
+        pure
+        returns (uint256)
+    {
+        uint256 exchangeFeeAmount = getExchangeFee(order, making);
+        return (exchangeFeeAmount * operatorFeeHaircut) / base;
+    }
+
+    function getRefundWithSurplus(Order memory order, uint256 making, uint256 taking, uint256 operatorFeeAmount)
+        internal
+        pure
+        returns (uint256)
+    {
+        return CalculatorHelper.calculateRefund(
+            order.feeRateBps, operatorFeeAmount, order.side == Side.BUY ? taking : making, making, taking, order.side
+        );
+    }
+
+    function getRefund(Order memory order, uint256 making, uint256 operatorFeeAmount) internal pure returns (uint256) {
         uint256 taking = CalculatorHelper.calculateTakingAmount(making, order.makerAmount, order.takerAmount);
-        return CalculatorHelper.calcRefund(
+        return CalculatorHelper.calculateRefund(
             order.feeRateBps,
-            operatorFeeRateBps, 
+            operatorFeeAmount,
             order.side == Side.BUY ? taking : making,
             order.makerAmount,
             order.takerAmount,

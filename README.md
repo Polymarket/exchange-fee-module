@@ -1,13 +1,13 @@
 # Polymarket CTF Exchange Fee Module
 
-The `FeeModule` contract proxies the `Exchange`'s `matchOrders` function and refunds maker orders if they are overcharged.
+The `FeeModule` contract proxies the `Exchange`'s `matchOrders` function and refunds orders' fees if they are charged more than the operator's intent.
 
 
 ## Deployments
 | Network          | Address                                                                           |
 | ---------------- | --------------------------------------------------------------------------------- |
 | Polygon          |[0x56C79347e95530c01A2FC76E732f9566dA16E113](https://polygonscan.com/address/0x56C79347e95530c01A2FC76E732f9566dA16E113)|
-| Mumbai           |[0x56C79347e95530c01A2FC76E732f9566dA16E113](https://mumbai.polygonscan.com/address/0x56C79347e95530c01A2FC76E732f9566dA16E113)|
+| Amoy           |[0x9A9faEf45C671cc57B3e117c5B3053075416490f](https://amoy.polygonscan.com/address/0x9A9faEf45C671cc57B3e117c5B3053075416490f)|
 
 ## Functions
 
@@ -19,15 +19,7 @@ function matchOrders(
     Order[] memory makerOrders,
     uint256 takerFillAmount,
     uint256[] memory makerFillAmounts,
-    uint256 makerFeeRate
+    uint256 takerFeeAmount,
+    uint256[] memory makerFeeAmounts
 ) external;
 ```
-
-## Description
-
-GTC taker orders that are marketable, but are not completely filled, will rest on the orderbook, becoming Maker orders. Because of this, they should be charged the maker fee rate.
-
-But, the feeRateBps field is signed into the Order by the user, without knowing whether or not the Order will remain a taker order or a maker order. Since maker orders are usually charged (much) lower fees than taker orders, the order could be overcharged.
-
-The FeeModule will refund maker orders which are overcharged.
-
