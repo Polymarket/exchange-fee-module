@@ -27,6 +27,6 @@ contract CollectorTest is CollectorTestHelper {
         // Assert balances
         assertEq(amount, balanceOf(address(usdc), brian));
         assertEq(amount, balanceOf1155(address(ctf), brian, yes));
-        assertEq(amount, balanceOf1155(address(ctf),brian ,no));
+        assertEq(amount, balanceOf1155(address(ctf), brian, no));
     }
 }
