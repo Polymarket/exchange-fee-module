@@ -9,16 +9,11 @@ FeeModule: $FEE_MODULE
 Admin: $ADMIN
 "
 
-# OUTPUT="$(forge script DeployCollector \
-#     --private-key $PK \
-#     --rpc-url $RPC_URL \
-#     --json \
-#     --broadcast \
-#     -s "run(address,address)" $ADMIN $FEE_MODULE)"
 OUTPUT="$(forge script DeployCollector \
     --private-key $PK \
     --rpc-url $RPC_URL \
     --json \
+    --broadcast \
     -s "run(address,address)" $ADMIN $FEE_MODULE)"
 
 COLLECTOR=$(echo "$OUTPUT" | grep "{" | jq -r .returns.collector.value)
